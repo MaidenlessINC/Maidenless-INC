@@ -231,6 +231,7 @@
 		border-bottom-right-radius: 0;
 		border-top-left-radius: 0;
 		box-shadow: 2px 2px 2px #e5dac0 inset, -2px -2px 2px #9f9171 inset;
+		cursor: pointer;
 	}
 
 	.mi-caught-all {
