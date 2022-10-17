@@ -168,8 +168,8 @@
 				popup.addToken('{*title*}', `Mice in ${ user.environment_name }`);
 				popup.addToken('{*content*}', renderMiceList(mice));
 				popup.show();
-				}
 			}
+		}
 
 		if (0 === uncaughtCount) {
 			caughtBox.classList.add('mi-caught-all');
@@ -192,7 +192,6 @@
 				'page_arguments[sub_tab]' : 'location',
 			}
 		).then((data) => {
-			console.log(data)
 			// Behold! The Waterfall of Validation!
 			if (! (
 				data &&
