@@ -69,28 +69,32 @@
 	/**
 	 * POST a request to the server and return the response.
 	 *
-	 * @param {string} url  The url to post to, not including the base url.
-	 * @param {Object} data The data to post.
+	 * @param {string} url      The url to post to, not including the base url.
+	 * @param {Object} formData The form data to post.
 	 *
-	 * @returns {Promise} The response.
+	 * @return {Promise} The response.
 	 */
 	const doRequest = async (url, formData) => {
+		if (! (lastReadJournalEntryId && user && user.unique_hash)) { // eslint-disable-line no-undef
+			return;
+		}
+
 		// Build the form for the request.
 		const form = new FormData();
 		form.append('sn', 'Hitgrab');
 		form.append('hg_is_ajax', 1);
-		form.append('last_read_journal_entry_id', lastReadJournalEntryId ? lastReadJournalEntryId : 0);
-		form.append('uh', user.unique_hash ? user.unique_hash : '');
+		form.append('last_read_journal_entry_id', lastReadJournalEntryId ? lastReadJournalEntryId : 0); // eslint-disable-line no-undef
+		form.append('uh', user.unique_hash ? user.unique_hash : ''); // eslint-disable-line no-undef
 
 		// Add in the form data.
 		for (const key in formData) {
-			form.append(key, formData[key]);
+			form.append(key, formData[ key ]);
 		}
 
 		const requestBody = new URLSearchParams(form).toString();
 
 		const response = await fetch(
-			callbackurl ? callbackurl + url  : 'https://www.mousehuntgame.com/' + url,
+			callbackurl ? callbackurl + url : 'https://www.mousehuntgame.com/' + url, // eslint-disable-line no-undef
 			{
 				method: 'POST',
 				body: requestBody,
@@ -102,7 +106,7 @@
 
 		const data = await response.json();
 		return data;
-	}
+	};
 
 	const renderMiceList = (mice) => {
 		let markup = '<div class="mh-uncaught-mice-list"><ul>';
