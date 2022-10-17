@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         MH - Uncaught Mice Display
-// @version      1.0.4
+// @version      1.1.0
 // @description  Shows uncaught mice at any location
 // @author       MI
 // @match        https://www.mousehuntgame.com/*
