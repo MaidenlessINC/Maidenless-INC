@@ -38,7 +38,7 @@
 	 * @param {string}   url         The url to match. If not provided, all ajax requests will be matched.
 	 * @param {boolean}  skipSuccess Skip the success check.
 	 */
-	 const onAjaxRequest = (callback, url = null, skipSuccess = false) => {
+	const onAjaxRequest = (callback, url = null, skipSuccess = false) => {
 		const req = XMLHttpRequest.prototype.open;
 		XMLHttpRequest.prototype.open = function () {
 			this.addEventListener('load', function () {
@@ -110,7 +110,7 @@
 
 	const renderMiceList = (mice) => {
 		let markup = '<div class="mh-uncaught-mice-list"><ul>';
-		mice.forEach(element => {
+		mice.forEach((element) => {
 			const mhctLink = `https://mhct.win/attractions.php?mouse_name=${ encodeURIComponent(element.name) }`;
 			markup += `<li class="mh-uncaught-mice ${ element.is_caught ? 'mh-uncaught-mice-caught' : 'mh-uncaught-mice-uncaught' }">
 				<img src="${ element.image }" alt="${ element.name }" title="${ element.name }" />
@@ -123,32 +123,32 @@
 		markup += '</ul></div>';
 
 		return markup;
-	}
+	};
 
 	/**
 	 * Create or update the uncaught mice display.
 	 *
-	 * @param {integer} uncaughtCount The number of uncaught mice.
+	 * @param {Array} locations The locations.
 	 */
 	const createOrUpdateDisplay = (locations) => {
 		const locationWrapper = document.querySelector('.mousehuntHud-environmentIconWrapper');
-		if (! locationWrapper ) {
+		if (! locationWrapper) {
 			return;
 		}
 
-		if (! (locations && user && user.environment_type && user.environment_name)) {
+		if (! (locations && user && user.environment_type && user.environment_name)) { // eslint-disable-line no-undef
 			return false;
 		}
 
 		const locationStats = locations.findIndex((location) => {
-			return location.type === user.environment_type;
+			return location.type === user.environment_type; // eslint-disable-line no-undef
 		});
 
-		if (locationStats === -1 || ! locations[locationStats] ) {
+		if (locationStats === -1 || ! locations[ locationStats ]) {
 			return false;
 		}
 
-		const uncaughtCount = locations[locationStats].total - locations[locationStats].caught;
+		const uncaughtCount = locations[ locationStats ].total - locations[ locationStats ].caught;
 
 		let caughtBox = document.querySelector('.mi-uncaught-box');
 		if (caughtBox) {
@@ -162,26 +162,26 @@
 		}
 
 		// merge all the arrays in the subgroup
-		if (locations[locationStats].subgroups) {
-			const mice = locations[locationStats].subgroups.reduce((acc, val) => acc.concat(val.mice), []);
+		if (locations[ locationStats ].subgroups) {
+			const mice = locations[ locationStats ].subgroups.reduce((acc, val) => acc.concat(val.mice), []);
 
 			caughtBox.onclick = () => {
-				var popup = new jsDialog();
+				const popup = new jsDialog(); // eslint-disable-line no-undef
 				popup.setIsModal(false);
 				popup.setTemplate('default');
-				popup.addToken('{*title*}', `Mice in ${ user.environment_name }`);
+				popup.addToken('{*title*}', `Mice in ${ user.environment_name }`); // eslint-disable-line no-undef
 				popup.addToken('{*content*}', renderMiceList(mice));
 				popup.show();
-			}
+			};
 		}
 
 		if (0 === uncaughtCount) {
 			caughtBox.classList.add('mi-caught-all');
-			catchBox.innerText = '🎉️';
+			caughtBox.innerText = '🎉️';
 		} else {
 			caughtBox.classList.remove('mi-caught-all');
 		}
-	}
+	};
 
 	/**
 	 * Render the uncaught mice.
@@ -191,9 +191,9 @@
 		doRequest(
 			'managers/ajax/pages/page.php',
 			{
-				'page_class': 'HunterProfile',
-				'page_arguments[tab]:': 'mice',
-				'page_arguments[sub_tab]' : 'location',
+				page_class: 'HunterProfile',
+				'page_arguments[tab]': 'mice',
+				'page_arguments[sub_tab]': 'location',
 			}
 		).then((data) => {
 			// Behold! The Waterfall of Validation!
@@ -204,16 +204,16 @@
 				data.page.tabs &&
 				data.page.tabs.mice &&
 				data.page.tabs.mice.subtabs &&
-				data.page.tabs.mice.subtabs[1] &&
-				data.page.tabs.mice.subtabs[1].mouse_list &&
-				data.page.tabs.mice.subtabs[1].mouse_list.categories
+				data.page.tabs.mice.subtabs[ 1 ] &&
+				data.page.tabs.mice.subtabs[ 1 ].mouse_list &&
+				data.page.tabs.mice.subtabs[ 1 ].mouse_list.categories
 			)) {
 				return;
 			}
 
-			createOrUpdateDisplay(data.page.tabs.mice.subtabs[1].mouse_list.categories);
+			createOrUpdateDisplay(data.page.tabs.mice.subtabs[ 1 ].mouse_list.categories);
 		});
-	}
+	};
 
 	addStyles(`.mi-uncaught-box {
 		position: absolute;
