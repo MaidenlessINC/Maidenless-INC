@@ -75,6 +75,10 @@
 	 * @return {Promise} The response.
 	 */
 	const doRequest = async (url, formData) => {
+		if (typeof lastReadJournalEntryId === 'undefined' || typeof user === 'undefined') {
+			return;
+		}
+
 		if (! (lastReadJournalEntryId && user && user.unique_hash)) { // eslint-disable-line no-undef
 			return;
 		}
