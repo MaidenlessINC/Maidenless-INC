@@ -2,7 +2,7 @@
 // @name         MouseHunt - GWH 2022 Nice/Naughty map colour coder
 // @author       tsitu & Leppy & Neb & in59te & Warden Slayer
 // @namespace    https://greasyfork.org/en/users/967077-maidenless
-// @version      1.1.5
+// @version      1.1.6
 // @description  Color codes mice on Nice/Naughty maps according to type. Max ML shown per group and AR shown individually. ARs given for standard cheese assume SB, if Gouda is relevant the ARs are given as ([Gouda] | [SB]). ARs given for (G)PP are given as ([PP] | [GPP]).
 // @match        http://www.mousehuntgame.com/*
 // @match        https://www.mousehuntgame.com/*
@@ -259,7 +259,7 @@ function colorize() {
 
     const isChecked = !simpleView;
     const isCheckedStr = isChecked ? "checked" : "";
-    console.log(isCheckedStr);
+    //console.log(isCheckedStr);
 
     if (
         document.querySelectorAll(".treasureMapView-goals-group-goal").length === 0
@@ -277,13 +277,23 @@ function colorize() {
     }
     */
 
+    const mapMiceSet = new Set()
+
     document.querySelectorAll(".treasureMapView-goals-group-goal").forEach(el => {
         let mouseName = el.querySelector(".treasureMapView-goals-group-goal-name").querySelector("span").firstChild .textContent;
         // Fix up the mouse name if we added AR info in.
         if (mouseName in miceNameDict) {
             mouseName = miceNameDict[mouseName];
         }
-        //console.log(mouseName);
+
+        // sometimes mice get duplicated.
+        if (mapMiceSet.has(mouseName)) {
+            //console.log(mouseName + " duplicated");
+            return;
+        }
+
+        //console.log(mouseName + " is new");
+        mapMiceSet.add(mouseName);
 
         for (let i = 0; i < allMiceGroups.length; i++) {
             if (allMiceGroups[i].hasMouse(mouseName)) {
@@ -295,12 +305,16 @@ function colorize() {
                     } else {
                         removeAr(el, mouseName)
                     }
+                    // early out once the mouse is found.
+                    break;
                 } else {
                     if (isChecked) el.style.backgroundColor = "white";
                 }
             }
         }
     });
+
+    //console.log(document.querySelectorAll(".treasureMapView-goals-group-goal").length);
 
     /*for (let i = 0; i < allMiceGroups.length; i++) {
         console.log(allMiceGroups[i].name + " " + allMiceGroups[i].cheese + " " + allMiceGroups[i].count);
