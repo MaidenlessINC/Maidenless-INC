@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      3.3.3
+// @version      3.3.4
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -4805,6 +4805,9 @@ function getData() {
         weaponName = user.weapon_name;
         baseName = user.base_name;
         charmName = user.trinket_name;
+        // Protection against error when no charm is armed.
+        if (charmName == null)
+            charmName = "";
         baitName = user.bait_name;
         trapPowerType = user.trap_power_type_name;
         // locationName = user.environment_name // For some reason this is not updated upon travelling.
