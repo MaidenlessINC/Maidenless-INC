@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      4.3.0
+// @version      4.4.0
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -2338,6 +2338,10 @@ var allMiceInfo = {
         "power": 1100,
         "effs": [10, 10, 10, 10, 0, 10, 10, 10, 10, 100]
     },
+    "M1000": {
+        "power": 118000,
+        "effs": [200, 200, 200, 200, 200, 200, 200, 200, 200, 200]
+    },
     "M400": {
         "power": 16400,
         "effs": [0, 0, 0, 0, 0, 50, 0, 50, 0, 0]
@@ -2387,8 +2391,8 @@ var allMiceInfo = {
         "effs": [101, 101, 101, 101, 101, 101, 101, 101, 101, 300]
     },
     "Malevolent Maestro": {
-        "power": 138450,
-        "effs": [0, 0, 0, 0, 0, 300, 0, 0, 0, 0]
+        "power": 184600,
+        "effs": [0, 0, 0, 0, 0, 400, 0, 0, 0, 0]
     },
     "Malicious Marquis": {
         "power": 36660,
@@ -4322,7 +4326,7 @@ var allMiceInfo = {
         "power": 16500,
         "effs": [0, 300, 0, 0, 0, 0, 0, 0, 0, 0]
     },
-    "⚡Thunderlord⚡": {
+    "\u26a1Thunderlord\u26a1": {
         "power": 13500,
         "effs": [0, 300, 0, 0, 0, 0, 0, 0, 0, 0]
     },
