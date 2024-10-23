@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      5.1.0
+// @version      5.2.0
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -23,6 +23,8 @@
 //User Settings-----------------------------
 //var turn_red_when = 60; //Turns red when your CR falls below it, in % Deprecated, set it with the tool nox now (click on "i");
 //User Settings End-------------------------
+
+const debugLog = false;
 
 const addStyles = (styles) => {
     const style = document.createElement('style');
@@ -5194,7 +5196,7 @@ function render() {
     luck_btn.src = 'https://www.mousehuntgame.com/images/ui/camp/trap/stat_luck.png?asset_cache_version=2'
     luck_btn.className = "min-luck-button"
     luck_btn.onclick = function () {
-        getData()
+        renderBox();
     }
 
     div.appendChild(luck_btn);
@@ -5203,69 +5205,60 @@ function render() {
     colourClover();
 }
 
-function getData() {
-    return new Promise((resolve, reject) => {
-        weaponName = user.weapon_name;
-        baseName = user.base_name;
-        charmName = user.trinket_name;
-        // Protection against error when no charm is armed.
-        if (charmName == null)
-            charmName = "";
-        baitName = user.bait_name;
-        trapPowerType = user.trap_power_type_name;
-        // locationName = user.environment_name // For some reason this is not updated upon travelling.
-        let locationElem = document.getElementsByClassName("mousehuntHud-environmentName")[0];
-        if (!locationElem) { // This does not exist on old hud
-            locationName = document.getElementsByClassName("hud_location")[0].innerText;
-        } else {
-            locationName = locationElem.innerText;
-        }
-        logUserInfo();
-        hgPromise(hg.utils.UserInventory.getItem, 'rift_luck_codex_stat_item').then(response => riftLuckCodex = (response.quantity == 1));
+let tem_data = [];
+async function refreshData() {
+    weaponName = user.weapon_name;
+    baseName = user.base_name;
+    charmName = user.trinket_name;
+    // Protection against error when no charm is armed.
+    if (charmName == null)
+        charmName = "";
+    baitName = user.bait_name;
+    trapPowerType = user.trap_power_type_name;
+    // locationName = user.environment_name // For some reason this is not updated upon travelling.
+    let locationElem = document.getElementsByClassName("mousehuntHud-environmentName")[0];
+    if (!locationElem) { // This does not exist on old hud
+        locationName = document.getElementsByClassName("hud_location")[0].innerText;
+    } else {
+        locationName = locationElem.innerText;
+    }
+    logUserInfo();
+    riftLuckCodex = user.quests.QuestCodexLibrary.active_codex_page_types.includes("rift_luck_codex_stat_item");
 
-        var powerContainer = document.getElementsByClassName("campPage-trap-trapStat power")[0];
-        getTrapStat(powerContainer);
-        basicTrapPowerBonus = user.trap_power_bonus; // 0.77 for 77%
-        basicTrapPowerTotal = user.trap_power;
-        basicTrapLuck = user.trap_luck;
-        basicTrapArBonus = Math.min(user.trap_attraction_bonus, 1.0);
+    var powerContainer = document.getElementsByClassName("campPage-trap-trapStat power")[0];
+    getTrapStat(powerContainer);
+    basicTrapPowerBonus = user.trap_power_bonus; // 0.77 for 77%
+    basicTrapPowerTotal = user.trap_power;
+    basicTrapLuck = user.trap_luck;
+    basicTrapArBonus = Math.min(user.trap_attraction_bonus, 1.0);
 
-        if (calcTrapTotalPower(basicTrapPower, basicTrapPowerBonus) != basicTrapPowerTotal) {
-            logger("WARNING: Displayed trap power is " + basicTrapPowerTotal + " while the calculated trap power is " + calcTrapTotalPower(basicTrapPower, basicTrapPowerBonus));
-        }
-        //if (weapon == "S.S. Scoundrel Sleigher Trap" || weapon.includes("Anniversary") || weapon == "Zugzwang's Ultimate Move" || weapon == "Moonbeam Barrier Trap"){
-        // alert("The extra stats from this weapon has not been factored in!")
-        // }
-        // if (charm == "Dragonbane Charm" || charm == "Super Dragonbane Charm" || charm == "Ultimate Charm" || charm == "EMP400 Charm"){
-        //     alert("The extra stats from this charm has not been factored in!")
-        // }
-        postReq("https://www.mousehuntgame.com/managers/ajax/users/getmiceeffectiveness.php",
-            `sn=Hitgrab&hg_is_ajax=1&uh=${user.unique_hash}`
-        ).then(async res => {
-            try {
-                var response = JSON.parse(res.responseText);
-                if (response) {
-                    var effect = ["Effortless", "Easy", "Moderate", "Challenging", "Difficult", "Overpowering", "Near Impossible", "Impossible"]
-                    var tem_list = []
-                    for (var i = 0; i < effect.length; i++) {
-                        if (response.effectiveness[effect[i]]) {
-                            for (var j = 0; j < response.effectiveness[effect[i]].mice.length; j++) {
-                                tem_list.push(response.effectiveness[effect[i]].mice[j].name)
-                            }
-                        }
+    if (calcTrapTotalPower(basicTrapPower, basicTrapPowerBonus) != basicTrapPowerTotal) {
+        logger("WARNING: Displayed trap power is " + basicTrapPowerTotal + " while the calculated trap power is " + calcTrapTotalPower(basicTrapPower, basicTrapPowerBonus));
+    }
+    //if (weapon == "S.S. Scoundrel Sleigher Trap" || weapon.includes("Anniversary") || weapon == "Zugzwang's Ultimate Move" || weapon == "Moonbeam Barrier Trap"){
+    // alert("The extra stats from this weapon has not been factored in!")
+    // }
+    // if (charm == "Dragonbane Charm" || charm == "Super Dragonbane Charm" || charm == "Ultimate Charm" || charm == "EMP400 Charm"){
+    //     alert("The extra stats from this charm has not been factored in!")
+    // }
+    const res = await postReq("https://www.mousehuntgame.com/managers/ajax/users/getmiceeffectiveness.php",
+        `sn=Hitgrab&hg_is_ajax=1&uh=${user.unique_hash}`);
+    try {
+        var response = JSON.parse(res.responseText);
+        tem_data = [];
+        if (response) {
+            var effect = ["Effortless", "Easy", "Moderate", "Challenging", "Difficult", "Overpowering", "Near Impossible", "Impossible"]
+            for (var i = 0; i < effect.length; i++) {
+                if (response.effectiveness[effect[i]]) {
+                    for (var j = 0; j < response.effectiveness[effect[i]].mice.length; j++) {
+                        tem_data.push(response.effectiveness[effect[i]].mice[j].name)
                     }
-                    const p = await renderBox(tem_list)
-                        .then(res => {
-                            var table = document.getElementById("chro-minluck-table")
-                            sortTable(table, 2, 3);
-                        });
-                    resolve()
                 }
-            } catch (error) {
-                console.error(error.stack);
             }
-        });
-    })
+        }
+    } catch (error) {
+        console.error(error.stack);
+    }
 }
 
 function getTrapStat(element) {
@@ -5303,11 +5296,15 @@ function checkAuraActive(auraName) {
     return isActive
 }
 
-function renderBox(list) {
+function removeBox() {
+    document
+        .querySelectorAll("#minluck-list")
+        .forEach(el => el.remove())
+}
+
+function renderBox() {
     return new Promise((resolve, reject) => {
-        document
-            .querySelectorAll("#minluck-list")
-            .forEach(el => el.remove())
+        removeBox();
 
         var power = Number(document.getElementsByClassName("campPage-trap-trapStat power")[0].children[1].innerText.match(/[0-9]/g).join(""))
         var luck = Number(document.getElementsByClassName("campPage-trap-trapStat luck")[0].children[1].innerText)
@@ -5343,7 +5340,7 @@ function renderBox(list) {
                 return
             } else {
                 localStorage.setItem("Chro-minluck-vwvh", JSON.stringify(mes));
-                renderBox(list);
+                renderBox();
             }
         }
 
@@ -5432,12 +5429,12 @@ function renderBox(list) {
         var cr_overAll = 0.0;
         var undefinedAr = false;
 
-        for (var i = 0; i < list.length; i++) {
+        for (var i = 0; i < tem_data.length; i++) {
             var row = document.createElement("tr");
             row.className = "chro-minluck-row"
             var mouseName = document.createElement("td");
-            mouseName.innerText = list[i];
-            var mouseNameConverted = list[i];
+            mouseName.innerText = tem_data[i];
+            var mouseNameConverted = tem_data[i];
             var power_index = allType.indexOf(powerType);
 
             var cr, cr_string, minluck_string, ar_string;
@@ -5543,6 +5540,7 @@ function renderBox(list) {
         overAllStatRow.appendChild(overAllStatMinLuck);
         overAllStatRow.appendChild(overAllStatCR);
         table.appendChild(overAllStatRow);
+        sortTable(table, 2, 3);
 
         buttonDiv.appendChild(infoButton);
         buttonDiv.appendChild(minButton);
@@ -5574,14 +5572,16 @@ function sortTable(table_id, sortColumn1, sortColumn2) {
     }
 }
 
-function postReq(url, form) {
+async function postReq(url, form) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", url, true);
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.onreadystatechange = function () {
-            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+        xhr.onload = function () {
+            if (this.status >= 200 && this.status < 300) {
                 resolve(this);
+            } else {
+                reject(this);
             }
         };
         xhr.onerror = function () {
@@ -5844,7 +5844,7 @@ function CRSpecialBonusAndEffects(mouseName, mPower, mEff) {
             var minigameContainer = document.getElementsByClassName("minigameContainer grubling")[0];
             if (minigameContainer) {
                 var saltContainer = minigameContainer.getElementsByClassName("salt_charms")[0];
-                console.log(saltContainer);
+                logger(saltContainer);
                 if (saltContainer && saltContainer.textContent != "0") {
                     // Weaken the King Grub with Grub Salt charms, and then use a Grub Scent charm to attract it when you're ready!
                     logCRAdjustmentInfo(mouseName, "Sand Crypts salted level " + saltContainer.textContent);
@@ -7717,7 +7717,9 @@ function riftCount() {
 
 // An easy way to turn on/off debugging info.
 function logger(message) {
-    console.log(message);
+    if (debugLog) {
+        console.log(message);
+    }
 }
 
 function trapChangeListener() {
@@ -7734,27 +7736,50 @@ function trapChangeListener() {
     };
 };
 
+var lastSetupCache;
 async function colourClover(){
     var button = $(".min-luck-button")[0];
 
-    await getData().then(() => {
-        var data = $(".chro-minluck-data-minluck");
-        var count = 0;
-        for (var i=0; i<data.length; i++){
-            data[i].classList.contains("good-minluck") ? count++ : null
-        }
-        if (count/data.length == 1) {
-            button.classList.add("blue");
-        } else if (count/data.length >= 0.5) {
-            button.classList.add("green");
-        } else {
-            button.classList.add("red");
-        }
-    });
+    // Add any user properties that indicate trap setup has changed or mouse pool may have changed
+    var currentSetupCache = `
+        ${user.trap_power}
+        ${user.trap_luck}
+        ${user.trap_attraction_bonus}
+        ${user.trap_cheese_effect}
+        ${user.trap_luck}
+        ${user.trap_power}
+        ${user.trap_power_bonus}
+        ${user.trap_power_type_name}
+        ${user.trinket_item_id}
+        ${user.base_item_id}
+        ${user.weapon_item_id}
+        ${user.bait_item_id}
+        ${user.bait_quantity == 0}
+        ${user.environment_id}
+    `;
 
-    if (document.getElementById("minluck-list")) {
-        document.querySelectorAll("#minluck-list").forEach(el=> el.remove());
+    if (currentSetupCache != lastSetupCache) {
+        logger("Setup has changed, getting new data");
+        await refreshData();
     }
+    lastSetupCache = currentSetupCache;
+
+    renderBox();
+
+    var data = $(".chro-minluck-data-minluck");
+    var count = 0;
+    for (var i=0; i<data.length; i++){
+        data[i].classList.contains("good-minluck") ? count++ : null
+    }
+    if (count/data.length == 1) {
+        button.classList.add("blue");
+    } else if (count/data.length >= 0.5) {
+        button.classList.add("green");
+    } else {
+        button.classList.add("red");
+    }
+
+    removeBox();
 }
 
 
