@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      5.2.0
+// @version      5.2.1
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -180,6 +180,10 @@ var allMiceInfo = {
         "power": 1900,
         "effs": [100, 100, 100, 100, 100, 100, 100, 100, 0]
     },
+    "Abrasive Abalone": {
+        "power": 16000,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
+    },
     "Absolute Acolyte": {
         "power": 59400,
         "effs": [0, 0, 0, 0, 0, 0, 0, 0, 2750]
@@ -248,6 +252,10 @@ var allMiceInfo = {
         "power": 16700,
         "effs": [100, 0, 300, 0, 0, 0, 0, 0, 0]
     },
+    "Ancient Wisdom Keeper": {
+        "power": 200000,
+        "effs": [0, 0, 0, 1000, 0, 0, 0, 0, 0]
+    },
     "Ancient of the Deep": {
         "power": 37999,
         "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
@@ -267,6 +275,10 @@ var allMiceInfo = {
     "Angry Train Staff": {
         "power": 3499,
         "effs": [0, 0, 0, 0, 0, 0, 0, 200, 0]
+    },
+    "Anguished Anemone": {
+        "power": 15500,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Aquos": {
         "power": 4600,
@@ -364,9 +376,17 @@ var allMiceInfo = {
         "power": 100,
         "effs": [25, 25, 25, 25, 200, 25, 100, 100, 0]
     },
+    "Barbaric Barnacle": {
+        "power": 14000,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
+    },
     "Bark": {
         "power": 5000,
         "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
+    },
+    "Bark Burner": {
+        "power": 18000,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
     },
     "Barkshell": {
         "power": 8000,
@@ -427,6 +447,10 @@ var allMiceInfo = {
     "Belchazar Banewright": {
         "power": 103250,
         "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "Belligerent Berghia": {
+        "power": 22000,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Berserker": {
         "power": 600,
@@ -492,6 +516,10 @@ var allMiceInfo = {
         "power": 27899,
         "effs": [0, 0, 0, 0, 300, 0, 300, 300, 0]
     },
+    "Blight Incarnate": {
+        "power": 200000,
+        "effs": [0, 0, 0, 0, 0, 0, 400, 0, 0]
+    },
     "Blizzara Winterosa": {
         "power": 42400,
         "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
@@ -535,6 +563,14 @@ var allMiceInfo = {
     "Bounty Hunter": {
         "power": 2100,
         "effs": [0, 0, 0, 0, 0, 0, 0, 200, 0]
+    },
+    "Branch Breaker": {
+        "power": 20000,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
+    },
+    "Brash Birch": {
+        "power": 20000,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
     },
     "Brawny": {
         "power": 882,
@@ -739,6 +775,10 @@ var allMiceInfo = {
     "Champion Thief": {
         "power": 72000,
         "effs": [0, 0, 0, 0, 0, 0, 0, 0, 900]
+    },
+    "Chaotic Chiton": {
+        "power": 34000,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Charming Chimer": {
         "power": 5100,
@@ -1099,6 +1139,10 @@ var allMiceInfo = {
     "Crown Collector": {
         "power": 2647,
         "effs": [100, 100, 100, 100, 100, 100, 100, 100, 100]
+    },
+    "Crusty Crab": {
+        "power": 18000,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Crystal Behemoth": {
         "power": 109500,
@@ -1836,6 +1880,10 @@ var allMiceInfo = {
         "power": 8525,
         "effs": [0, 0, 100, 100, 0, 0, 0, 0, 0]
     },
+    "Furious Fir": {
+        "power": 8525,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
+    },
     "Fuzzy Drake": {
         "power": 3175,
         "effs": [0, 100, 0, 0, 0, 0, 0, 0, 0]
@@ -2112,9 +2160,17 @@ var allMiceInfo = {
         "power": 5000,
         "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
+    "Heinous Hemlock": {
+        "power": 34000,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
+    },
     "Herbaceous Bravestalk": {
         "power": 4000,
         "effs": [0, 0, 0, 0, 100, 0, 0, 0, 0]
+    },
+    "Herbicidal Maniac": {
+        "power": 120000,
+        "effs": [0, 0, 0, 0, 0, 0, 400, 0, 0]
     },
     "Herc": {
         "power": 21625,
@@ -2316,6 +2372,10 @@ var allMiceInfo = {
         "power": 23140,
         "effs": [0, 0, 0, 0, 100, 0, 0, 0, 0]
     },
+    "Killer Krill": {
+        "power": 36000,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
+    },
     "King Grub": {
         "power": 499995,
         "effs": [0, 0, 0, 0, 0, 100, 0, 0, 0]
@@ -2444,6 +2504,10 @@ var allMiceInfo = {
         "power": 5300,
         "effs": [100, 0, 125, 0, 0, 0, 0, 0, 0]
     },
+    "Loutish Loach": {
+        "power": 25000,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
+    },
     "Lovely Sports": {
         "power": 650,
         "effs": [100, 100, 100, 100, 100, 100, 100, 100, 100]
@@ -2560,6 +2624,10 @@ var allMiceInfo = {
         "power": 3990,
         "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
+    "Maniacal Maple": {
+        "power": 25000,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
+    },
     "Market Guard": {
         "power": 42803,
         "effs": [0, 0, 0, 0, 300, 0, 300, 300, 0]
@@ -2643,6 +2711,10 @@ var allMiceInfo = {
     "Menace of the Rift": {
         "power": 5003,
         "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
+    },
+    "Menacing Medusozoa": {
+        "power": 17500,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Mermouse": {
         "power": 3300,
@@ -2800,6 +2872,10 @@ var allMiceInfo = {
         "power": 45,
         "effs": [100, 100, 100, 100, 100, 100, 175, 100, 0]
     },
+    "Moss Comber": {
+        "power": 14000,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
+    },
     "Mossy Moosker": {
         "power": 2000,
         "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
@@ -2847,6 +2923,10 @@ var allMiceInfo = {
     "Mummy": {
         "power": 3860,
         "effs": [100, 0, 100, 0, 25, 200, 25, 0, 0]
+    },
+    "Muscular Mussel": {
+        "power": 38000,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Mush": {
         "power": 7290,
@@ -3072,6 +3152,10 @@ var allMiceInfo = {
         "power": 2400,
         "effs": [100, 100, 100, 100, 100, 100, 100, 100, 100]
     },
+    "Nyagarha the Falls Guardian": {
+        "power": 180000,
+        "effs": [0, 0, 0, 400, 0, 0, 0, 0, 0]
+    },
     "Obstinate Oboist": {
         "power": 19000,
         "effs": [0, 0, 0, 0, 100, 0, 0, 0, 0]
@@ -3239,6 +3323,10 @@ var allMiceInfo = {
     "Perpetual Detention": {
         "power": 28500,
         "effs": [150, 0, 0, 0, 0, 100, 0, 0, 0]
+    },
+    "Pesky Pleco": {
+        "power": 23000,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Pestilentia the Putrid": {
         "power": 84500,
@@ -3468,6 +3556,10 @@ var allMiceInfo = {
         "power": 13700,
         "effs": [0, 100, 0, 0, 0, 0, 0, 0, 0]
     },
+    "Rampaging Redwood": {
+        "power": 38000,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
+    },
     "Rancid Bog Beast": {
         "power": 2199,
         "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
@@ -3692,9 +3784,17 @@ var allMiceInfo = {
         "power": 13601,
         "effs": [100, 0, 300, 0, 0, 0, 0, 0, 0]
     },
+    "Sap Stealer": {
+        "power": 16000,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
+    },
     "Sarcophamouse": {
         "power": 5000,
         "effs": [0, 0, 0, 0, 0, 100, 0, 0, 0]
+    },
+    "Sardonic Sapling": {
+        "power": 15500,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
     },
     "Sassy Salsa Dancer": {
         "power": 24000,
@@ -3727,6 +3827,10 @@ var allMiceInfo = {
     "Scorned Pirate": {
         "power": 2350,
         "effs": [101, 101, 101, 101, 101, 101, 101, 101, 300]
+    },
+    "Scornful Scallop": {
+        "power": 20000,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Scout": {
         "power": 1750,
@@ -3823,6 +3927,10 @@ var allMiceInfo = {
     "Shelder": {
         "power": 1270,
         "effs": [0, 0, 0, 175, 100, 0, 100, 0, 0]
+    },
+    "Shifty Shrimp": {
+        "power": 27000,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Shinobi": {
         "power": 2910,
@@ -4066,6 +4174,10 @@ var allMiceInfo = {
     },
     "Soul Binder": {
         "power": 18501,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
+    },
+    "Sour Sprout": {
+        "power": 22000,
         "effs": [100, 0, 5000, 0, 0, 0, 0, 0, 0]
     },
     "Space Party-Time Plumber": {
@@ -4764,6 +4876,10 @@ var allMiceInfo = {
         "power": 1500,
         "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
     },
+    "Twisted Twig": {
+        "power": 17500,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
+    },
     "Tyrannical Thaumaturge": {
         "power": 100000,
         "effs": [150, 0, 0, 0, 0, 100, 0, 0, 0]
@@ -4839,6 +4955,10 @@ var allMiceInfo = {
     "Violet Stormchild": {
         "power": 2000,
         "effs": [0, 100, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "Wailing Willow": {
+        "power": 27000,
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
     },
     "Walker": {
         "power": 14751,
@@ -5334,7 +5454,7 @@ function renderBox() {
 
         infoButton.onclick = function () {
             let position = JSON.parse(localStorage.getItem("Chro-minluck-vwvh")).split(",");
-            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 10 May 2023\n\n Change tool's position / Set % for red text?\n\n" +
+            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 3 Sep 2025\n\n Change tool's position / Set % for red text?\n\n" +
                 "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%", "35,28,60");
             if (mes == null || mes == "") {
                 return
@@ -5381,8 +5501,11 @@ function renderBox() {
         const locInfo = document.createElement("div")
         locInfo.className = "loc-info"
         locInfo.innerHTML = "Location: ".concat(locationName);
-        if (locationName == "Bountiful Beanstalk") {
-            locInfo.innerHTML = locInfo.innerHTML.concat("<p>Catch Rates might be off for the boss mice.");
+        if (locationName == "Afterword Acres") {
+            locInfo.innerHTML = locInfo.innerHTML.concat("<p>Subjected to changes.");
+        }
+        else if (locationName == "Epilogue Falls") {
+            locInfo.innerHTML = locInfo.innerHTML.concat("<p>Subjected to changes.");
         } else if (locationName == "Zugzwang's Tower") {
             if (weaponName == "Technic Pawn Pincher") {
                 locInfo.innerHTML = locInfo.innerHTML.concat("<p>This trap has hidden stat changes<br>On Technic Pawn: + 10920 Power, + 51 Luck<br>On Mystic Pawn: - 60 Power, - 0.05 Luck");
