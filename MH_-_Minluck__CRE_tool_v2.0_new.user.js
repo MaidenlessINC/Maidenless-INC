@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      5.2.1
+// @version      5.2.2
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -4174,11 +4174,11 @@ var allMiceInfo = {
     },
     "Soul Binder": {
         "power": 18501,
-        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
+        "effs": [100, 0, 5000, 0, 0, 0, 0, 0, 0]
     },
     "Sour Sprout": {
         "power": 22000,
-        "effs": [100, 0, 5000, 0, 0, 0, 0, 0, 0]
+        "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
     },
     "Space Party-Time Plumber": {
         "power": 500,
