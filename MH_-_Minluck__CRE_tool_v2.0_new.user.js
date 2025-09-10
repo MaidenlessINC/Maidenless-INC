@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      5.2.2
+// @version      5.2.3
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -176,6 +176,10 @@ $(document).ajaxStop(function () {
 });
 
 var allMiceInfo = {
+    "⚡Thunderlord⚡": {
+        "power": 13500,
+        "effs": [0, 300, 0, 0, 0, 0, 0, 0, 0]
+    },
     "Abominable Snow": {
         "power": 1900,
         "effs": [100, 100, 100, 100, 100, 100, 100, 100, 0]
@@ -248,17 +252,17 @@ var allMiceInfo = {
         "power": 750,
         "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
     },
+    "Ancient of the Deep": {
+        "power": 37999,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
+    },
     "Ancient Scribe": {
         "power": 16700,
         "effs": [100, 0, 300, 0, 0, 0, 0, 0, 0]
     },
     "Ancient Wisdom Keeper": {
-        "power": 200000,
-        "effs": [0, 0, 0, 1000, 0, 0, 0, 0, 0]
-    },
-    "Ancient of the Deep": {
-        "power": 37999,
-        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
+        "power": 120000,
+        "effs": [0, 0, 0, 600, 0, 0, 0, 0, 0]
     },
     "Angelfish": {
         "power": 4960,
@@ -361,8 +365,8 @@ var allMiceInfo = {
         "effs": [0, 0, 0, 0, 0, 0, 0, 200, 0]
     },
     "Avalancheus the Glacial": {
-        "power": 84500,
-        "effs": [0, 500, 0, 0, 0, 0, 0, 0, 0]
+        "power": 42250,
+        "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
     },
     "Baba Gaga": {
         "power": 3750,
@@ -445,8 +449,8 @@ var allMiceInfo = {
         "effs": [0, 0, 0, 0, 0, 0, 175, 0, 0]
     },
     "Belchazar Banewright": {
-        "power": 103250,
-        "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
+        "power": 206500,
+        "effs": [0, 500, 0, 0, 0, 0, 0, 0, 0]
     },
     "Belligerent Berghia": {
         "power": 22000,
@@ -517,8 +521,8 @@ var allMiceInfo = {
         "effs": [0, 0, 0, 0, 300, 0, 300, 300, 0]
     },
     "Blight Incarnate": {
-        "power": 200000,
-        "effs": [0, 0, 0, 0, 0, 0, 400, 0, 0]
+        "power": 300000,
+        "effs": [0, 0, 0, 0, 0, 0, 600, 0, 0]
     },
     "Blizzara Winterosa": {
         "power": 42400,
@@ -569,7 +573,7 @@ var allMiceInfo = {
         "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
     },
     "Brash Birch": {
-        "power": 20000,
+        "power": 23000,
         "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
     },
     "Brawny": {
@@ -805,8 +809,8 @@ var allMiceInfo = {
         "effs": [0, 0, 0, 0, 0, 0, 2500, 0, 0]
     },
     "Chillandria Permafrost": {
-        "power": 103250,
-        "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
+        "power": 206500,
+        "effs": [0, 500, 0, 0, 0, 0, 0, 0, 0]
     },
     "Chip Chiseler": {
         "power": 1260,
@@ -929,8 +933,8 @@ var allMiceInfo = {
         "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
     },
     "Combustius Furnaceheart": {
-        "power": 103250,
-        "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
+        "power": 206500,
+        "effs": [0, 500, 0, 0, 0, 0, 0, 0, 0]
     },
     "Confused Courier": {
         "power": 2064,
@@ -1861,7 +1865,7 @@ var allMiceInfo = {
         "effs": [0, 0, 0, 0, 0, 0, 0, 200, 0]
     },
     "Ful'Mina the Mountain Queen": {
-        "power": 78003,
+        "power": 78000,
         "effs": [0, 900, 0, 0, 0, 0, 0, 0, 0]
     },
     "Fungal Frog": {
@@ -1881,7 +1885,7 @@ var allMiceInfo = {
         "effs": [0, 0, 100, 100, 0, 0, 0, 0, 0]
     },
     "Furious Fir": {
-        "power": 8525,
+        "power": 36000,
         "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
     },
     "Fuzzy Drake": {
@@ -2169,8 +2173,8 @@ var allMiceInfo = {
         "effs": [0, 0, 0, 0, 100, 0, 0, 0, 0]
     },
     "Herbicidal Maniac": {
-        "power": 120000,
-        "effs": [0, 0, 0, 0, 0, 0, 400, 0, 0]
+        "power": 180000,
+        "effs": [0, 0, 0, 0, 0, 0, 600, 0, 0]
     },
     "Herc": {
         "power": 21625,
@@ -2296,13 +2300,13 @@ var allMiceInfo = {
         "power": 5,
         "effs": [25, 25, 25, 25, 200, 25, 100, 100, 0]
     },
+    "Incendarius the Unquenchable": {
+        "power": 42250,
+        "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
+    },
     "Incompetent Ice Climber": {
         "power": 5000,
         "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
-    },
-    "Incendarius the Unquenchable": {
-        "power": 84500,
-        "effs": [0, 500, 0, 0, 0, 0, 0, 0, 0]
     },
     "Industrious Digger": {
         "power": 1150,
@@ -2324,13 +2328,13 @@ var allMiceInfo = {
         "power": 48000,
         "effs": [150, 0, 0, 0, 0, 100, 0, 0, 0]
     },
-    "Itty-Bitty Burroughs": {
-        "power": 8250,
-        "effs": [100, 0, 0, 0, 100, 100, 100, 0, 0]
-    },
     "Itty Bitty Rifty Burroughs": {
         "power": 1250,
         "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
+    },
+    "Itty-Bitty Burroughs": {
+        "power": 8250,
+        "effs": [100, 0, 0, 0, 100, 100, 100, 0, 0]
     },
     "Jellyfish": {
         "power": 4300,
@@ -2848,13 +2852,13 @@ var allMiceInfo = {
         "power": 8240,
         "effs": [100, 0, 100, 100, 500, 500, 100, 100, 0]
     },
-    "Monster Tail": {
-        "power": 3750,
-        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
-    },
     "Monster of the Meteor": {
         "power": 88000,
         "effs": [1000, 0, 0, 0, 0, 100, 0, 0, 0]
+    },
+    "Monster Tail": {
+        "power": 3750,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Monstrous Abomination": {
         "power": 24998,
@@ -2892,10 +2896,6 @@ var allMiceInfo = {
         "power": 1800,
         "effs": [101, 101, 101, 101, 101, 101, 101, 101, 300]
     },
-    "Mouse With No Name": {
-        "power": 4999,
-        "effs": [0, 0, 0, 0, 0, 0, 0, 200, 0]
-    },
     "Mouse of Elements": {
         "power": 16000,
         "effs": [0, 0, 0, 0, 0, 0, 0, 0, 500]
@@ -2911,6 +2911,10 @@ var allMiceInfo = {
     "Mouse of Winter Present": {
         "power": 882,
         "effs": [100, 100, 100, 100, 100, 100, 100, 100, 100]
+    },
+    "Mouse With No Name": {
+        "power": 4999,
+        "effs": [0, 0, 0, 0, 0, 0, 0, 200, 0]
     },
     "Mousevina von Vermin": {
         "power": 18300,
@@ -3153,8 +3157,8 @@ var allMiceInfo = {
         "effs": [100, 100, 100, 100, 100, 100, 100, 100, 100]
     },
     "Nyagarha the Falls Guardian": {
-        "power": 180000,
-        "effs": [0, 0, 0, 400, 0, 0, 0, 0, 0]
+        "power": 270000,
+        "effs": [0, 0, 0, 600, 0, 0, 0, 0, 0]
     },
     "Obstinate Oboist": {
         "power": 19000,
@@ -3264,13 +3268,13 @@ var allMiceInfo = {
         "power": 246965,
         "effs": [0, 0, 0, 0, 0, 0, 500, 0, 0]
     },
-    "Paragon of Water": {
-        "power": 322000,
-        "effs": [0, 0, 0, 500, 0, 0, 0, 0, 0]
-    },
     "Paragon of the Lawless": {
         "power": 124100,
         "effs": [0, 0, 0, 0, 0, 0, 0, 500, 0]
+    },
+    "Paragon of Water": {
+        "power": 322000,
+        "effs": [0, 0, 0, 500, 0, 0, 0, 0, 0]
     },
     "Parlour Player": {
         "power": 2250,
@@ -3329,8 +3333,8 @@ var allMiceInfo = {
         "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Pestilentia the Putrid": {
-        "power": 84500,
-        "effs": [0, 500, 0, 0, 0, 0, 0, 0, 0]
+        "power": 42250,
+        "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
     },
     "Phalanx": {
         "power": 900,
@@ -3436,13 +3440,13 @@ var allMiceInfo = {
         "power": 12345,
         "effs": [0, 0, 0, 0, 0, 200, 0, 0, 0]
     },
-    "Princess Fist": {
-        "power": 15500,
-        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
-    },
     "Princess and the Olive": {
         "power": 9800,
         "effs": [0, 0, 100, 0, 0, 0, 0, 0, 0]
+    },
+    "Princess Fist": {
+        "power": 15500,
+        "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Prospector": {
         "power": 1750,
@@ -3519,10 +3523,6 @@ var allMiceInfo = {
     "Quillback": {
         "power": 8000,
         "effs": [0, 0, 100, 100, 0, 0, 0, 0, 0]
-    },
-    "RR-8": {
-        "power": 7900,
-        "effs": [100, 0, 300, 0, 0, 0, 0, 0, 0]
     },
     "Radioactive Ooze": {
         "power": 1601,
@@ -3707,6 +3707,10 @@ var allMiceInfo = {
     "Root Rummager": {
         "power": 9000,
         "effs": [0, 0, 0, 0, 0, 0, 100, 0, 0]
+    },
+    "RR-8": {
+        "power": 7900,
+        "effs": [100, 0, 300, 0, 0, 0, 0, 0, 0]
     },
     "Rubble Rouser": {
         "power": 4225,
@@ -4505,8 +4509,8 @@ var allMiceInfo = {
         "effs": [0, 0, 0, 0, 0, 0, 0, 0, 200]
     },
     "Supremia Magnificus": {
-        "power": 125000,
-        "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
+        "power": 250000,
+        "effs": [0, 500, 0, 0, 0, 0, 0, 0, 0]
     },
     "Surgeon Bot": {
         "power": 975,
@@ -4641,19 +4645,15 @@ var allMiceInfo = {
         "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
     },
     "Three'amat the Mother of Dragons": {
-        "power": 144000,
-        "effs": [0, 500, 0, 0, 0, 0, 0, 0, 0]
+        "power": 72000,
+        "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
     },
     "Thunder Strike": {
-        "power": 1650,
+        "power": 1600,
         "effs": [0, 100, 0, 0, 0, 0, 0, 0, 0]
     },
     "Thundering Watcher": {
         "power": 16500,
-        "effs": [0, 300, 0, 0, 0, 0, 0, 0, 0]
-    },
-    "⚡Thunderlord⚡": {
-        "power": 13500,
         "effs": [0, 300, 0, 0, 0, 0, 0, 0, 0]
     },
     "Tidal Fisher": {
@@ -4820,6 +4820,10 @@ var allMiceInfo = {
         "power": 2000,
         "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
     },
+    "Tri-dra": {
+        "power": 7500,
+        "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
+    },
     "Trick": {
         "power": 2000,
         "effs": [101, 101, 101, 101, 101, 101, 101, 101, 300]
@@ -4827,10 +4831,6 @@ var allMiceInfo = {
     "Tricky Witch": {
         "power": 1250,
         "effs": [101, 101, 101, 101, 101, 101, 101, 101, 300]
-    },
-    "Tri-dra": {
-        "power": 7500,
-        "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
     },
     "Triple Lutz": {
         "power": 266,
@@ -4953,7 +4953,7 @@ var allMiceInfo = {
         "effs": [0, 0, 0, 0, 100, 0, 0, 0, 0]
     },
     "Violet Stormchild": {
-        "power": 2000,
+        "power": 2200,
         "effs": [0, 100, 0, 0, 0, 0, 0, 0, 0]
     },
     "Wailing Willow": {
@@ -5152,10 +5152,10 @@ var allMiceInfo = {
         "power": 1000,
         "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
     },
-    "Zurreal the Eternal": {
-        "power": 73001,
-        "effs": [0, 0, 0, 0, 0, 0, 5500, 0, 0]
-    }
+  "Zurreal the Eternal": {
+    "power": 73001,
+    "effs": [0, 0, 0, 0, 0, 0, 5500, 0, 0]
+  }
 };
 
 // All ar info guidelines
@@ -5454,7 +5454,7 @@ function renderBox() {
 
         infoButton.onclick = function () {
             let position = JSON.parse(localStorage.getItem("Chro-minluck-vwvh")).split(",");
-            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 3 Sep 2025\n\n Change tool's position / Set % for red text?\n\n" +
+            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 10 Sept 2025\n\n Change tool's position / Set % for red text?\n\n" +
                 "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%", "35,28,60");
             if (mes == null || mes == "") {
                 return
