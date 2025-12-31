@@ -2,7 +2,7 @@
 // @name         MouseHunt - GWH 2022 Nice/Naughty map colour coder
 // @author       tsitu & Leppy & Neb & in59te & Warden Slayer
 // @namespace    https://greasyfork.org/en/users/967077-maidenless
-// @version      1.1.7
+// @version      1.1.8
 // @description  Color codes mice on Nice/Naughty maps according to type. Max ML shown per group and AR shown individually. ARs given for standard cheese assume SB, if Gouda is relevant the ARs are given as ([Gouda] | [SB]). ARs given for (G)PP are given as ([PP] | [GPP]).
 // @match        http://www.mousehuntgame.com/*
 // @match        https://www.mousehuntgame.com/*
@@ -24,103 +24,103 @@ const chestKeywords = [
     "New Year's",
 ];
 
-// name, AR - per UNIX 1670418873
+// name, AR - per UNIX 1767178496
 // ARs given for standard cheese assume SB, if Gouda is relevant the ARs are given as "[Gouda] | [SB]"
 // ARs given for (G)PP are given as "[PP] | [GPP]"
 
 const standardAnyMice = [
-    ["Hoarder", "22.74%"], //lowest currently known sb AR%, some areas may be better
+    ["Hoarder", "25.84% | 20.97%"], //lowest currently known sb AR%, some areas may be better
 ];
 const ppAnyMice = [
-    ["Snowflake", "2.6% | 4.48%"], //lowest currently known, some areas may be better
-    ["Stuck Snowball", "3.86% | 4.48%"], //lowest currently known, some areas may be better
+    ["Snowflake", "2.99% | 4.84%"], //lowest currently known, some areas may be better
+    ["Stuck Snowball", "4.91% | 5.06%"], //lowest currently known, some areas may be better
 ];
 const gppAnyMice = [
-    ["Glazy", "4.35%"], //lowest currently known, some areas may be better
-    ["Joy", "5.86%"], //lowest currently known, some areas may be better
+    ["Glazy", "4.78%"], //lowest currently known, some areas may be better
+    ["Joy", "6.07%"], //lowest currently known, some areas may be better
 ];
 const bossMice = [
     ["Frost King", "special"],
 ];
 const standardHillMice = [
-    ["Candy Cane", "24.18%"],
-    ["Nice Knitting", "12.94% | 8.06%"],
-    ["Shorts-All-Year", "10.94%"],
-    ["Snow Scavenger", "6.72%"],
-    ["Toboggan Technician", "11.13%"],
-    ["Young Prodigy Racer", "19.72% | 15.55%"],
+    ["Candy Cane", "22.89% | 19.69%"],
+    ["Nice Knitting", "14.39% | 9.35%"],
+    ["Shorts-All-Year", "10.20% | 4.87%"],
+    ["Snow Scavenger", "8.00% | 7.30%"],
+    ["Toboggan Technician", "9.99% | 7.73%"],
+    ["Young Prodigy Racer", "21.84% | 16.94%"],
 ];
 const ppHillMice = [
-    ["Triple Lutz", "5.04%"],
+    ["Triple Lutz", "5.01%"],
 ];
 const ppGppHillMice = [
-    ["Black Diamond Racer", "19.22% | 8.73%"],
-    ["Double Black Diamond Racer", "4.02% | 3.63%"],
-    ["Free Skiing", "4.09% | 3.76%"],
-    ["Great Giftnapper", "3.06% | 2.61%"],
-    ["Nitro Racer", "4.24% | 3.89%"],
-    ["Ol' King Coal", "2.11% | 2.23%"],
-    ["Rainbow Racer", "2.36% | 2.17%"],
-    ["Snow Boulder", "7.83% | 11.91%"],
-    ["Snow Golem Jockey", "9.8% | 8.22%"],
-    ["Snowball Hoarder", "7.99% | 13.69%"],
-    ["Sporty Ski Instructor", "12.75% | 10%"],
-    ["Wreath Thief", "10.3% | 8.41%"],
-    ["Frightened Flying Fireworks", "???% | ???%"],
+    ["Black Diamond Racer", "19.95% | 10.04%"],
+    ["Double Black Diamond Racer", "3.99% | 3.86%"],
+    ["Free Skiing", "3.98% | 3.86%"],
+    ["Great Giftnapper", "2.96% | 3.03%"],
+    ["Nitro Racer", "4.17% | 5.02%"],
+    ["Ol' King Coal", "2.00% | 1.99%"],
+    ["Rainbow Racer", "1.92% | 2.07%"],
+    ["Snow Boulder", "7.74% | 11.52%"],
+    ["Snow Golem Jockey", "9.73% | 7.99%"],
+    ["Snowball Hoarder", "7.65% | 12.08%"],
+    ["Sporty Ski Instructor", "12.68% | 9.84%"],
+    ["Wreath Thief", "10.07% | 7.67%"],
+    ["Frightened Flying Fireworks", "2.08% | 2.98%"],
 ];
 const standardWorkshopMice = [
-    ["Gingerbread", "18.77%"],
-    ["Greedy Al", "11.08%"],
-    ["Mouse of Winter Future", "14.5% | 9.23%"],
-    ["Mouse of Winter Past", "11.08%"],
-    ["Mouse of Winter Present", "22.75% | 16.31%"],
+    ["Gingerbread", "21.48% | 16.43%"],
+    ["Greedy Al", "10.48% | 10.26%"],
+    ["Mouse of Winter Future", "14.66% | 9.80%"],
+    ["Mouse of Winter Past", "10.31% | 8.77%"],
+    ["Mouse of Winter Present", "23.76% | 19.86%"],
 ];
 const sbWorkshopMice = [
-    ["Scrooge", "9.23%"],
+    ["Scrooge", "7.80%"],
 ];
 const ppWorkshopMice = [
-    ["Ribbon", "5.97%"],
+    ["Ribbon", "4.94%"],
 ];
 const ppGppWorkshopMice = [
-    ["Christmas Tree", "9.7% | 7.99%"],
-    ["Destructoy", "7.61% | 10.69%"],
-    ["Elf", "17.44% | 8.7%"],
-    ["Mad Elf", "1.51% | 1.76%"],
-    ["Nutcracker", "4.33% | 3.88%"],
-    ["Ornament", "3.8% | 3.41%"],
-    ["Present", "10.03% | 7.52%"],
-    ["Ridiculous Sweater", "8.52% | 9.75%"],
-    ["Snow Golem Architect", "2.82% | 4.11%"],
-    ["Stocking", "3.21% | 3.53%"],
-    ["Toy", "10.62% | 11.52%"],
-    ["Toy Tinkerer", "7.41% | 5.76%"],
-    ["Party Head", "???% | ???%"],
+    ["Christmas Tree", "10.09% | 7.68%"],
+    ["Destructoy", "7.08% | 9.87%"],
+    ["Elf", "17.13% | 8.67%"],
+    ["Mad Elf", "1.99% | 2.05%"],
+    ["Nutcracker", "4.01% | 4.18%"],
+    ["Ornament", "4.10% | 4.02%"],
+    ["Present", "10.13% | 7.69%"],
+    ["Ridiculous Sweater", "8.08% | 9.76%"],
+    ["Snow Golem Architect", "4.06% | 5.08%"],
+    ["Stocking", "3.99% | 3.69%"],
+    ["Toy", "7.82% | 11.64%"],
+    ["Toy Tinkerer", "8.33% | 5.00%"],
+    ["Party Head", "2.39% | 2.02%"],
 ];
 const standardFortressMice = [
-    ["Confused Courier", "13.75%"],
-    ["Frigid Foreman", "11.67% | 8.13%"],
-    ["Miser", "15.63%"],
-    ["Missile Toe", "15.63%"],
-    ["Snowblower", "12.78% | 7.5%"],
-    ["Snowglobe", "21.67% | 9.38%"],
+    ["Confused Courier", "15.73% | 10.01%"],
+    ["Frigid Foreman", "10.19% | 9.54%"],
+    ["Miser", "14.30% | 10.31%"],
+    ["Missile Toe", "15.42% | 14.55%"],
+    ["Snowblower", "14.35% | 10.39%"],
+    ["Snowglobe", "20.11% | 8.84%"],
 ];
 const ppFortressMice = [
-    ["Builder", "4.29%"],
+    ["Builder", "6.91%"],
 ];
 const ppGppFortressMice = [
-    ["Borean Commander", "4.91% | 6.37%"],
-    ["Glacia Ice Fist", "11.66% | 4.46%"],
-    ["Great Winter Hunt Impostor", "6.75% | 11.78%"],
-    ["Iceberg Sculptor", "3.07% | 2.55%"],
-    ["Naughty Nougat", "4.29% | 6.05%"],
-    ["Reinbo", "19.02% | 4.14%"],
-    ["S.N.O.W. Golem", "6.75% | 4.78%"],
-    ["Slay Ride", "9.2% | 11.46%"],
-    ["Snow Fort", "11.04% | 8.6%"],
-    ["Snow Sorceress", "3.68% | 6.37%"],
-    ["Squeaker Claws", "4.91% | 3.18%"],
-    ["Tundra Huntress", "4.91% | 2.55%"],
-    ["New Year's", "???% | ???%"],
+    ["Borean Commander", "5.59% | 8.16%"],
+    ["Glacia Ice Fist", "10.00% | 5.87%"],
+    ["Great Winter Hunt Impostor", "6.82% | 13.90%"],
+    ["Iceberg Sculptor", "3.94% | 3.02%"],
+    ["Naughty Nougat", "3.92% | 4.13%"],
+    ["Reinbo", "19.53% | 3.00%"],
+    ["S.N.O.W. Golem", "3.98% | 4.27%"],
+    ["Slay Ride", "8.15% | 10.01%"],
+    ["Snow Fort", "9.71% | 11.55%"],
+    ["Snow Sorceress", "6.93% | 8.18%"],
+    ["Squeaker Claws", "4.16% | 3.98%"],
+    ["Tundra Huntress", "1.93% | 2.09%"],
+    ["New Year's", "1.66% | 2.85%"],
 ];
 
 // group name, mice, minimum luck, bait, bait ID, color
