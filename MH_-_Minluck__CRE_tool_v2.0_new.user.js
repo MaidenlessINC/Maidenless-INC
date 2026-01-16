@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      5.2.4
+// @version      5.2.5
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -269,8 +269,8 @@ var allMiceInfo = {
     "effs": [100, 0, 300, 0, 0, 0, 0, 0, 0]
   },
   "Ancient Wisdom Keeper": {
-    "power": 120000,
-    "effs": [0, 0, 0, 600, 0, 0, 0, 0, 0]
+    "power": 100000,
+    "effs": [0, 0, 0, 500, 0, 0, 0, 0, 0]
   },
   "Angelfish": {
     "power": 4960,
@@ -5634,7 +5634,7 @@ function renderBox() {
 
         infoButton.onclick = function () {
             let position = JSON.parse(localStorage.getItem("Chro-minluck-vwvh")).split(",");
-            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 15 Jan 2026\n\n Change tool's position / Set % for red text?\n\n" +
+            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 16 Jan 2026\n\n Change tool's position / Set % for red text?\n\n" +
                 "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%", "35,28,60");
             if (mes == null || mes == "") {
                 return
