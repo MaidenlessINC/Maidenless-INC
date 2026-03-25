@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      5.2.6
+// @version      5.2.7
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -1526,7 +1526,7 @@ var allMiceInfo = {
   },
   "Dumpling Chef": {
     "power": 2000,
-    "effs": [0, 0, 0, 0, 100, 0, 175, 0, 0]
+    "effs": [100, 100, 100, 100, 100, 100, 175, 100, 100]
   },
   "Dumpling Delivery": {
     "power": 2305,
@@ -5634,7 +5634,7 @@ function renderBox() {
 
         infoButton.onclick = function () {
             let position = JSON.parse(localStorage.getItem("Chro-minluck-vwvh")).split(",");
-            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 28 Jan 2026\n\n Change tool's position / Set % for red text?\n\n" +
+            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 25 Mar 2026\n\n Change tool's position / Set % for red text?\n\n" +
                 "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%", "35,28,60");
             if (mes == null || mes == "") {
                 return
