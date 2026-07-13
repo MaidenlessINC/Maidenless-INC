@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      5.2.7
+// @version      5.2.8
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -204,6 +204,10 @@ var allMiceInfo = {
     "power": 18000,
     "effs": [25, 0, 175, 0, 0, 25, 0, 0, 0]
   },
+  "Acrobatic Aurora Bandit": {
+    "power": 10500,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
+  },
   "Admiral Arrrgh": {
     "power": 1800,
     "effs": [101, 101, 101, 101, 101, 101, 101, 101, 300]
@@ -247,6 +251,10 @@ var allMiceInfo = {
   "Alpha Weremouse": {
     "power": 6825,
     "effs": [100, 0, 0, 0, 0, 150, 0, 0, 0]
+  },
+  "Amateur Knife Juggler": {
+    "power": 6000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
   },
   "Amplified Brown": {
     "power": 750,
@@ -332,6 +340,10 @@ var allMiceInfo = {
     "power": 2590,
     "effs": [0, 0, 0, 0, 0, 0, 0, 0, 100]
   },
+  "Arrogant Aurora Connoisseur": {
+    "power": 12500,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
+  },
   "Artillery Commander": {
     "power": 21065,
     "effs": [100, 0, 0, 50, 50, 0, 50, 0, 0]
@@ -359,6 +371,10 @@ var allMiceInfo = {
   "Audacious Alchemist": {
     "power": 48000,
     "effs": [100, 0, 0, 0, 0, 150, 0, 0, 0]
+  },
+  "Audacious Aurora Embezzler": {
+    "power": 13000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
   },
   "Automated Sentry": {
     "power": 950,
@@ -576,6 +592,10 @@ var allMiceInfo = {
     "power": 3930,
     "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
   },
+  "Boulder and Pebble": {
+    "power": 11000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
+  },
   "Boulder Biter": {
     "power": 1500,
     "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
@@ -716,6 +736,10 @@ var allMiceInfo = {
     "power": 500,
     "effs": [100, 100, 100, 100, 100, 100, 100, 100, 100]
   },
+  "Captain Crook": {
+    "power": 46200,
+    "effs": [300, 300, 300, 300, 300, 300, 300, 300, 0]
+  },
   "Captain Noname": {
     "power": 18000,
     "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
@@ -731,6 +755,10 @@ var allMiceInfo = {
   "Carefree Cook": {
     "power": 2200,
     "effs": [100, 100, 100, 100, 100, 100, 100, 100, 100]
+  },
+  "Careless Canister Rider": {
+    "power": 9500,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
   },
   "Careless Catfish": {
     "power": 10000,
@@ -932,6 +960,10 @@ var allMiceInfo = {
     "power": 28000,
     "effs": [0, 0, 0, 0, 100, 0, 0, 0, 0]
   },
+  "Cluttergrin the Commodore of Curiosities": {
+    "power": 24000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 300, 0]
+  },
   "Coal Shoveller": {
     "power": 2250,
     "effs": [0, 0, 0, 0, 0, 0, 0, 200, 0]
@@ -951,6 +983,10 @@ var allMiceInfo = {
   "Colonel Crisp": {
     "power": 47000,
     "effs": [0, 250, 0, 0, 0, 0, 0, 0, 0]
+  },
+  "Colossal Canister Collector": {
+    "power": 10000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
   },
   "Combustius Furnaceheart": {
     "power": 206500,
@@ -1096,6 +1132,10 @@ var allMiceInfo = {
     "power": 1000,
     "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
   },
+  "Covetous Canister Thief": {
+    "power": 8500,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
+  },
   "Covetous Coastguard": {
     "power": 7000,
     "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
@@ -1115,6 +1155,10 @@ var allMiceInfo = {
   "Crag Elder": {
     "power": 4100,
     "effs": [0, 0, 100, 50, 0, 0, 0, 0, 0]
+  },
+  "Craggerclaw the Magnate of Minerals": {
+    "power": 33000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 300, 0]
   },
   "Craggy Ore": {
     "power": 600,
@@ -1537,8 +1581,8 @@ var allMiceInfo = {
     "effs": [0, 0, 0, 0, 0, 100, 0, 0, 0]
   },
   "Dungeon Master": {
-    "power": 104250,
-    "effs": [0, 0, 0, 0, 300, 0, 0, 0, 0]
+    "power": 112938,
+    "effs": [0, 0, 0, 0, 325, 0, 0, 0, 0]
   },
   "Dwarf": {
     "power": 40,
@@ -2100,6 +2144,10 @@ var allMiceInfo = {
     "power": 2400,
     "effs": [100, 100, 100, 100, 100, 100, 100, 100, 100]
   },
+  "Greedy Stone Grappler": {
+    "power": 9500,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
+  },
   "Greenbeard": {
     "power": 11500,
     "effs": [0, 0, 100, 0, 0, 0, 0, 0, 0]
@@ -2219,6 +2267,10 @@ var allMiceInfo = {
   "Heavy Blaster": {
     "power": 5000,
     "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
+  },
+  "Hefty Hulking Hauler": {
+    "power": 9000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
   },
   "Heinous Hemlock": {
     "power": 34000,
@@ -3520,6 +3572,10 @@ var allMiceInfo = {
     "power": 9000,
     "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
   },
+  "Port Pillager": {
+    "power": 6700,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
+  },
   "Portable Generator": {
     "power": 1000,
     "effs": [10, 10, 10, 10, 10, 10, 10, 10, 100]
@@ -3635,6 +3691,10 @@ var allMiceInfo = {
   "Pyrite": {
     "power": 650,
     "effs": [0, 0, 0, 0, 0, 0, 0, 200, 0]
+  },
+  "Quarrelsome Quartermaster": {
+    "power": 7200,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 300, 0]
   },
   "Queen Quesada": {
     "power": 42000,
@@ -4088,6 +4148,10 @@ var allMiceInfo = {
     "power": 27000,
     "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
   },
+  "Shimmerdread the Sovereign of Spice": {
+    "power": 38400,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 300, 0]
+  },
   "Shinobi": {
     "power": 2910,
     "effs": [0, 0, 0, 0, 0, 0, 0, 0, 100]
@@ -4216,6 +4280,10 @@ var allMiceInfo = {
     "power": 18500,
     "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
   },
+  "Slipstream the Virtuoso of Vapours": {
+    "power": 30000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 300, 0]
+  },
   "Slope Swimmer": {
     "power": 600,
     "effs": [100, 100, 100, 100, 100, 100, 100, 100, 0]
@@ -4235,6 +4303,10 @@ var allMiceInfo = {
   "Sludge Swimmer": {
     "power": 19000,
     "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
+  },
+  "Sly Skulking Scrapper": {
+    "power": 7500,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
   },
   "Smoldersnap": {
     "power": 7820,
@@ -4576,6 +4648,10 @@ var allMiceInfo = {
     "power": 4500,
     "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
   },
+  "Stubby Scrap Scavenger": {
+    "power": 8500,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
+  },
   "Stuck Snowball": {
     "power": 1068,
     "effs": [100, 100, 100, 100, 100, 100, 100, 100, 100]
@@ -4695,6 +4771,10 @@ var allMiceInfo = {
   "Swashblade": {
     "power": 8709,
     "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
+  },
+  "Swift Stone Snatcher": {
+    "power": 10500,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 100, 0]
   },
   "Sylvan": {
     "power": 200,
@@ -4951,6 +5031,10 @@ var allMiceInfo = {
   "Travelling Barber": {
     "power": 3253,
     "effs": [0, 0, 0, 0, 0, 0, 0, 200, 0]
+  },
+  "Treacherous Dock Lurker": {
+    "power": 5000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 400, 0]
   },
   "Treacherous Tubaist": {
     "power": 77925,
@@ -5634,7 +5718,7 @@ function renderBox() {
 
         infoButton.onclick = function () {
             let position = JSON.parse(localStorage.getItem("Chro-minluck-vwvh")).split(",");
-            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 25 Mar 2026\n\n Change tool's position / Set % for red text?\n\n" +
+            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 13 Jul 2026\n\n Change tool's position / Set % for red text?\n\n" +
                 "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%", "35,28,60");
             if (mes == null || mes == "") {
                 return
