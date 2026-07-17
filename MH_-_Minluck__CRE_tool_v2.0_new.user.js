@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      5.2.8
+// @version      5.2.9
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -737,8 +737,8 @@ var allMiceInfo = {
     "effs": [100, 100, 100, 100, 100, 100, 100, 100, 100]
   },
   "Captain Crook": {
-    "power": 46200,
-    "effs": [300, 300, 300, 300, 300, 300, 300, 300, 0]
+    "power": 38500,
+    "effs": [250, 250, 250, 250, 250, 250, 250, 250, 0]
   },
   "Captain Noname": {
     "power": 18000,
@@ -961,8 +961,8 @@ var allMiceInfo = {
     "effs": [0, 0, 0, 0, 100, 0, 0, 0, 0]
   },
   "Cluttergrin the Commodore of Curiosities": {
-    "power": 24000,
-    "effs": [0, 0, 0, 0, 0, 0, 0, 300, 0]
+    "power": 20000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 250, 0]
   },
   "Coal Shoveller": {
     "power": 2250,
@@ -1157,8 +1157,8 @@ var allMiceInfo = {
     "effs": [0, 0, 100, 50, 0, 0, 0, 0, 0]
   },
   "Craggerclaw the Magnate of Minerals": {
-    "power": 33000,
-    "effs": [0, 0, 0, 0, 0, 0, 0, 300, 0]
+    "power": 27500,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 250, 0]
   },
   "Craggy Ore": {
     "power": 600,
@@ -3693,8 +3693,8 @@ var allMiceInfo = {
     "effs": [0, 0, 0, 0, 0, 0, 0, 200, 0]
   },
   "Quarrelsome Quartermaster": {
-    "power": 7200,
-    "effs": [0, 0, 0, 0, 0, 0, 0, 300, 0]
+    "power": 6000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 250, 0]
   },
   "Queen Quesada": {
     "power": 42000,
@@ -4149,8 +4149,8 @@ var allMiceInfo = {
     "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
   },
   "Shimmerdread the Sovereign of Spice": {
-    "power": 38400,
-    "effs": [0, 0, 0, 0, 0, 0, 0, 300, 0]
+    "power": 32000,
+    "effs": [0, 0, 0, 0, 0, 0, 0, 250, 0]
   },
   "Shinobi": {
     "power": 2910,
@@ -4281,7 +4281,7 @@ var allMiceInfo = {
     "effs": [0, 0, 0, 100, 0, 0, 0, 0, 0]
   },
   "Slipstream the Virtuoso of Vapours": {
-    "power": 30000,
+    "power": 25000,
     "effs": [0, 0, 0, 0, 0, 0, 0, 300, 0]
   },
   "Slope Swimmer": {
@@ -5718,7 +5718,7 @@ function renderBox() {
 
         infoButton.onclick = function () {
             let position = JSON.parse(localStorage.getItem("Chro-minluck-vwvh")).split(",");
-            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 13 Jul 2026\n\n Change tool's position / Set % for red text?\n\n" +
+            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 17 Jul 2026\n\n Change tool's position / Set % for red text?\n\n" +
                 "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%", "35,28,60");
             if (mes == null || mes == "") {
                 return
