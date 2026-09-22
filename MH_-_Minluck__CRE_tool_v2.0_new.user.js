@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      5.2.9
+// @version      5.2.10
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -5518,7 +5518,25 @@ var SSSSTMice = new Set([
     "Scarlet Revenger",
     "Mairitime Pirate",
     "Admiral Cloudbeard",
-    "Peggy the Plunderer"
+    "Peggy the Plunderer",
+    "Stubby Scrap Scavenger",
+    "Sly Skulking Scrapper",
+    "Hefty Hulking Hauler",
+    "Careless Canister Rider",
+    "Covetous Canister Thief",
+    "Colossal Canister Collector",
+    "Swift Stone Snatcher",
+    "Greedy Stone Grappler",
+    "Boulder and Pebble",
+    "Arrogant Aurora Connoisseur",
+    "Acrobatic Aurora Bandit",
+    "Audacious Aurora Embezzler",
+    "Quarrelsome Quartermaster",
+    "Cluttergrin the Commodore of Curiosities",
+    "Slipstream the Virtuoso of Vapours",
+    "Craggerclaw the Magnate of Minerals",
+    "Shimmerdread the Sovereign of Spice",
+    "Captain Crook"
 ]);
 
 var weremiceMice = new Set([
@@ -5718,7 +5736,7 @@ function renderBox() {
 
         infoButton.onclick = function () {
             let position = JSON.parse(localStorage.getItem("Chro-minluck-vwvh")).split(",");
-            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 17 Jul 2026\n\n Change tool's position / Set % for red text?\n\n" +
+            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 22 Sept 2026\n\n Change tool's position / Set % for red text?\n\n" +
                 "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%", "35,28,60");
             if (mes == null || mes == "") {
                 return
