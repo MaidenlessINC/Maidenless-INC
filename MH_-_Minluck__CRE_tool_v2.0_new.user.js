@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      5.2.10
+// @version      6.0.0
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -25,6 +25,9 @@
 //User Settings End-------------------------
 
 const debugLog = false;
+let lastSetupCache;
+let colourUpdatePromise;
+let colourUpdateRequested = false;
 
 const addStyles = (styles) => {
     const style = document.createElement('style');
@@ -38,8 +41,8 @@ const addStyles = (styles) => {
 (function () {
     if (document.getElementsByClassName("trapImageView-trapAuraContainer")[0] && document.getElementById("mousehuntContainer").className.includes("PageCamp")) {
         render();
-        trapChangeListener()
     }
+    trapChangeListener();
 
     addStyles(`.min-luck-container {
         position: absolute;
@@ -168,10 +171,12 @@ const addStyles = (styles) => {
 
 $(document).ajaxStop(function () {
     var trapContainer = document.getElementsByClassName("trapImageView-trapAuraContainer")[0]
-    if (document.getElementsByClassName("min-luck-container")[0]) {
-        return;
-    } else if (trapContainer && document.getElementById("mousehuntContainer").className.includes("PageCamp")) {
-        render();
+    if (trapContainer && document.getElementById("mousehuntContainer")?.className.includes("PageCamp")) {
+        if (document.getElementsByClassName("min-luck-container")[0]) {
+            colourClover();
+        } else {
+            render();
+        }
     }
 });
 
@@ -5647,19 +5652,21 @@ async function refreshData() {
         `sn=Hitgrab&hg_is_ajax=1&uh=${user.unique_hash}`);
     try {
         var response = JSON.parse(res.responseText);
-        tem_data = [];
+        const mice = [];
         if (response) {
             var effect = ["Effortless", "Easy", "Moderate", "Challenging", "Difficult", "Overpowering", "Near Impossible", "Impossible"]
             for (var i = 0; i < effect.length; i++) {
                 if (response.effectiveness[effect[i]]) {
                     for (var j = 0; j < response.effectiveness[effect[i]].mice.length; j++) {
-                        tem_data.push(response.effectiveness[effect[i]].mice[j].name)
+                        mice.push(response.effectiveness[effect[i]].mice[j].name)
                     }
                 }
             }
         }
+        return mice;
     } catch (error) {
         console.error(error.stack);
+        throw error;
     }
 }
 
@@ -5704,277 +5711,269 @@ function removeBox() {
         .forEach(el => el.remove())
 }
 
-function renderBox() {
-    return new Promise((resolve, reject) => {
-        removeBox();
+function calculateResults(powerType) {
+    const relevantArInfo = getArInfo();
+    const ftc = relevantArInfo.FTC;
+    const powerIndex = allType.indexOf(powerType);
+    const rows = [];
+    let overallAr = 0;
+    let overallMinluck = 0;
+    let overallCr = 0;
+    let undefinedAr = false;
+    let goodMinluckCount = 0;
 
-        var power = Number(document.getElementsByClassName("campPage-trap-trapStat power")[0].children[1].innerText.match(/[0-9]/g).join(""))
-        var luck = Number(document.getElementsByClassName("campPage-trap-trapStat luck")[0].children[1].innerText)
-        var powerType = document.getElementsByClassName("campPage-trap-trapStat power")[0].children[1].innerText.match(/[a-zA-Z]+/g)[0];
+    for (const mouseName of tem_data) {
+        const mouseInfo = allMiceInfo[mouseName];
+        if (!mouseInfo) {
+            rows.push({ name: mouseName, ar: 'Unknown', minluck: 'Unknown', cr: 'Unknown', minluckSort: -Infinity, crSort: Infinity, goodMinluck: false });
+            continue;
+        }
 
-        const div = document.createElement("div");
-        div.id = "minluck-list";
-
-        var vwvh = localStorage.getItem("Chro-minluck-vwvh")
-        var turnRed;
-        if (vwvh) {
-            var position = JSON.parse(vwvh).split(",");
-            div.style.left = position[0] + "vw";
-            div.style.top = position[1] + "vh";
-            turnRed = Number(position[2]);
+        const mousePower = mouseInfo.power;
+        const mouseEff = mouseInfo.effs[powerIndex];
+        const cr = calculateCR(mouseName, mousePower, mouseEff);
+        const crText = convertCRToPercentage(cr);
+        let ar = relevantArInfo[mouseName];
+        if (ar === undefined) {
+            ar = '';
+            undefinedAr = true;
         } else {
-            turnRed = 60;
-            localStorage.setItem("Chro-minluck-vwvh", JSON.stringify("35,28,60"));
-        };
-
-        const buttonDiv = document.createElement("div")
-        buttonDiv.id = "button-Div"
-
-        const infoButton = document.createElement("button");
-        infoButton.id = "info-button"
-        infoButton.textContent = "i"
-
-        infoButton.onclick = function () {
-            let position = JSON.parse(localStorage.getItem("Chro-minluck-vwvh")).split(",");
-            let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 22 Sept 2026\n\n Change tool's position / Set % for red text?\n\n" +
-                "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%", "35,28,60");
-            if (mes == null || mes == "") {
-                return
-            } else {
-                localStorage.setItem("Chro-minluck-vwvh", JSON.stringify(mes));
-                renderBox();
-            }
+            ar = adjustAr(ar, ftc);
+            overallAr += ar;
+            overallCr += ar * cr;
+            ar = convertDoubleToPercentage(ar);
         }
 
-        const minButton = document.createElement("button");
-        minButton.id = "minimise-button"
-        minButton.textContent = "-"
-        minButton.onclick = function () {
-            const minluckTable = document.getElementById("chro-minluck-table");
-            if (minButton.textContent == "-") {
-                minluckTable.classList.add("minimised");
-                minButton.textContent = "+";
-            } else if (minButton.textContent == "+") {
-                minluckTable.classList.remove("minimised");
-                minButton.textContent = "-";
-            }
+        const minluck = mouseMinluck(mouseName, mousePower, mouseEff);
+        const infinite = minluck === '∞';
+        if (infinite) {
+            overallMinluck = '∞';
+        } else if (overallMinluck !== '∞' && minluck > overallMinluck) {
+            overallMinluck = minluck;
         }
+        const goodMinluck = adjustedTrapLuck >= minluck;
+        if (goodMinluck) goodMinluckCount++;
+        rows.push({ name: mouseName, ar, minluck, cr: crText, minluckSort: infinite ? Infinity : minluck, crSort: cr, goodMinluck });
+    }
 
-        const closeButton = document.createElement("button");
-        closeButton.id = "close-button";
-
-        closeButton.textContent = "x";
-        closeButton.onclick = function () {
-            document.body.removeChild(div);
-        };
-
-        const setupInfo = document.createElement("div")
-        setupInfo.className = "setup-info"
-        setupInfo.textContent = "Catch Rate Estimator"
-
-        const powerInfo = document.createElement("div")
-        powerInfo.className = "power-info"
-        powerInfo.textContent = "Power: ".concat(power)
-
-        const luckInfo = document.createElement("div")
-        luckInfo.className = "luck-info"
-        luckInfo.textContent = "Luck: ".concat(luck);
-
-        const locInfo = document.createElement("div")
-        locInfo.className = "loc-info"
-        locInfo.innerHTML = "Location: ".concat(locationName);
-        if (locationName == "Afterword Acres") {
-            locInfo.innerHTML = locInfo.innerHTML.concat("<p>Subjected to changes.");
-        }
-        else if (locationName == "Epilogue Falls") {
-            locInfo.innerHTML = locInfo.innerHTML.concat("<p>Subjected to changes.");
-        } else if (locationName == "Zugzwang's Tower") {
-            if (weaponName == "Technic Pawn Pincher") {
-                locInfo.innerHTML = locInfo.innerHTML.concat("<p>This trap has hidden stat changes<br>On Technic Pawn: + 10920 Power, + 51 Luck<br>On Mystic Pawn: - 60 Power, - 0.05 Luck");
-            } else if (weaponName == "Mystic Pawn Pincher") {
-                locInfo.innerHTML = locInfo.innerHTML.concat("<p>This trap has hidden stat changes<br>On Mystic Pawn: + 10920 Power, + 51 Luck<br>On Technic Pawn: - 60 Power, - 0.05 Luck");
-            } else if (weaponName == "Obvious Ambush Trap") {
-                locInfo.innerHTML = locInfo.innerHTML.concat("<p>This trap has hidden stat changes<br>On Technic mice: + 1800 Power, + 6 Luck<br>On Mystic mice: -2400 Power, - 9 Luck");
-            } else if (weaponName == "Blackstone Pass Trap") {
-                locInfo.innerHTML = locInfo.innerHTML.concat("<p>This trap has hidden stat changes<br>On Mystic mice: + 1800 Power, + 6 Luck<br>On Technic mice: -2400 Power, - 9 Luck");
-            }
-        }
-
-        setupInfo.appendChild(locInfo);
-        setupInfo.appendChild(powerInfo);
-        setupInfo.appendChild(luckInfo);
-
-        const table = document.createElement("table");
-        table.id = "chro-minluck-table"
-
-        const miceheader = document.createElement("th");
-        miceheader.className = "chro-minluck-header-name"
-        miceheader.innerText = "Mouse Name"
-        table.appendChild(miceheader);
-
-        const arheader = document.createElement("th");
-        arheader.className = "chro-minluck-header-ar"
-        arheader.innerText = "AR"
-        table.appendChild(arheader);
-
-        const minluckheader = document.createElement("th");
-        minluckheader.className = "chro-minluck-header-minluck"
-        minluckheader.innerText = "Minluck"
-        table.appendChild(minluckheader);
-
-        const crheader = document.createElement("th");
-        crheader.className = "chro-minluck-header-cr"
-        crheader.innerText = "CRE"
-        table.appendChild(crheader);
-
-        var relevantArInfo = getArInfo();
-        var ftc = relevantArInfo.FTC;
-        var ar_overAll = 0.0;
-        var minLuck_overAll = 0.0;
-        var cr_overAll = 0.0;
-        var undefinedAr = false;
-
-        for (var i = 0; i < tem_data.length; i++) {
-            var row = document.createElement("tr");
-            row.className = "chro-minluck-row"
-            var mouseName = document.createElement("td");
-            mouseName.innerText = tem_data[i];
-            var mouseNameConverted = tem_data[i];
-            var power_index = allType.indexOf(powerType);
-
-            var cr, cr_string, minluck_string, ar_string;
-            var mouse_info = allMiceInfo[mouseNameConverted];
-            if (mouse_info) {
-                var mice_power = mouse_info.power;
-                var mice_eff = mouse_info.effs[power_index];
-
-                cr = calculateCR(mouseNameConverted, mice_power, mice_eff);
-                cr_string = convertCRToPercentage(cr);
-
-                ar_string = relevantArInfo[mouseNameConverted];
-                if (ar_string == undefined) {
-                    ar_string = "";
-                    undefinedAr = true;
-                } else {
-                    ar_string = adjustAr(ar_string, ftc);
-                    ar_overAll = ar_overAll + ar_string;
-                    cr_overAll = cr_overAll + ar_string * cr;
-                    ar_string = convertDoubleToPercentage(ar_string);
-                }
-
-                minluck_string = mouseMinluck(mouseNameConverted, mice_power, mice_eff);
-                var infinitySym = String.fromCharCode(0x221E)
-                if (minluck_string == infinitySym) {
-                    minLuck_overAll = infinitySym;
-                } else if (minLuck_overAll != infinitySym && minluck_string > minLuck_overAll) {
-                    minLuck_overAll = minluck_string;
-                }
-            } else {
-                // Mouse not found in info list, credit to Xellis
-                ar_string = cr_string = minluck_string = 'Unknown';
-            }
-
-            //attraction rate-------
-            var aR = document.createElement("td");
-            aR.className = "chro-minluck-data-ar";
-            aR.innerText = ar_string;
-
-            //minluck----
-            var minLuck = document.createElement("td");
-            minLuck.className = "chro-minluck-data-minluck";
-            minLuck.innerText = minluck_string;
-            if (adjustedTrapLuck >= minluck_string) {
-                minLuck.classList.add('good-minluck');
-            }
-
-            //catch rate-------
-            var cR = document.createElement("td");
-            cR.className = "chro-minluck-data-cr";
-            cR.innerText = cr_string;
-            var cr_number = (parseInt(cr_string))
-            if (cr_string == "100.00%") {
-                cR.classList.add('good-minluck');
-            } else if (cr_number <= turnRed) {
-                cR.classList.add('bad-minluck');
-            }
-
-            row.appendChild(mouseName);
-            row.appendChild(aR);
-            row.appendChild(minLuck);
-            row.appendChild(cR);
-            table.appendChild(row);
-        }
-
-        var overAllStatRow = document.createElement("tr");
-        overAllStatRow.className = "chro-minluck-row"
-
-        var overAllStatTitle = document.createElement("td");
-        overAllStatTitle.innerText = "Overall Stat";
-        overAllStatTitle.className = "chro-minluck-header-name"
-
-        var overAllStatAR = document.createElement("td");
-        overAllStatAR.className = "chro-minluck-overall-ar"
-        if (!undefinedAr) {
-            overAllStatAR.innerText = convertDoubleToPercentage(ar_overAll);
-        } else {
-            arheader.innerText = ""
-        }
-
-        var overAllStatMinLuck = document.createElement("td");
-        overAllStatMinLuck.className = "chro-minluck-overall-minluck"
-        overAllStatMinLuck.innerText = minLuck_overAll;
-         if (adjustedTrapLuck >= minLuck_overAll) {
-            overAllStatMinLuck.classList.add('good-minluck');
-        }
-
-        var overAllStatCR = document.createElement("td");
-        overAllStatCR.className = "chro-minluck-overall-cr"
-        if (!undefinedAr) {
-            overAllStatCR.innerText = convertDoubleToPercentage(cr_overAll);
-
-            var cr_overAll_number = (parseInt(cr_overAll))
-            if (overAllStatCR.innerText == "100.00%") {
-                overAllStatCR.classList.add('good-minluck');
-            } else if (cr_overAll_number <= turnRed) {
-                overAllStatCR.classList.add('bad-minluck');
-            }
-        }
-
-        overAllStatRow.appendChild(overAllStatTitle);
-        overAllStatRow.appendChild(overAllStatAR);
-        overAllStatRow.appendChild(overAllStatMinLuck);
-        overAllStatRow.appendChild(overAllStatCR);
-        table.appendChild(overAllStatRow);
-        sortTable(table, 2, 3);
-
-        buttonDiv.appendChild(infoButton);
-        buttonDiv.appendChild(minButton);
-        buttonDiv.appendChild(closeButton);
-        div.appendChild(setupInfo);
-        div.appendChild(buttonDiv)
-        div.appendChild(table);
-        document.body.appendChild(div);
-        dragElement(div);
-        resolve();
-    })
+    rows.sort((a, b) => a.minluckSort === b.minluckSort ? a.crSort - b.crSort : (a.minluckSort > b.minluckSort ? -1 : 1));
+    return { rows, overallAr, overallMinluck, overallCr, undefinedAr, goodMinluckCount };
 }
 
-// Sorting on minluck (desc) and CR (asc)
-function sortTable(table_id, sortColumn1, sortColumn2) {
-    var rowData = table_id.getElementsByTagName('tr');
-    // Do not sort the last row as it's the overall stat.
-    for (var i = 1; i < rowData.length - 1; i++) {
-        for (var j = 0; j < rowData.length - (i + 1); j++) {
-            var sortValue1 = Number(rowData.item(j).getElementsByTagName('td').item(sortColumn1).innerHTML.replace(/[^0-9\.]+/g, ""));
-            var sortValue2 = Number(rowData.item(j + 1).getElementsByTagName('td').item(sortColumn1).innerHTML.replace(/[^0-9\.]+/g, ""));
-            var sortValue3 = Number(rowData.item(j).getElementsByTagName('td').item(sortColumn2).innerHTML.replace(/[^0-9\.]+/g, ""));
-            var sortValue4 = Number(rowData.item(j + 1).getElementsByTagName('td').item(sortColumn2).innerHTML.replace(/[^0-9\.]+/g, ""));
+function renderBox(results) {
+    const previousBox = document.getElementById("minluck-list");
+    const previousTable = document.getElementById("chro-minluck-table");
+    const wasMinimised = previousTable?.classList.contains("minimised");
+    const previousLeft = previousBox?.style.left;
+    const previousTop = previousBox?.style.top;
+    removeBox();
 
-            if (sortValue1 < sortValue2 || (sortValue1 === sortValue2 && sortValue3 > sortValue4)) {
-                table_id.insertBefore(rowData.item(j + 1), rowData.item(j));
-            }
+    var power = Number(document.getElementsByClassName("campPage-trap-trapStat power")[0].children[1].innerText.match(/[0-9]/g).join(""))
+    var luck = Number(document.getElementsByClassName("campPage-trap-trapStat luck")[0].children[1].innerText)
+    var powerType = document.getElementsByClassName("campPage-trap-trapStat power")[0].children[1].innerText.match(/[a-zA-Z]+/g)[0];
+
+    const div = document.createElement("div");
+    div.id = "minluck-list";
+
+    var vwvh = localStorage.getItem("Chro-minluck-vwvh")
+    var turnRed;
+    if (vwvh) {
+        var position = JSON.parse(vwvh).split(",");
+        div.style.left = position[0] + "vw";
+        div.style.top = position[1] + "vh";
+        turnRed = Number(position[2]);
+    } else {
+        turnRed = 60;
+        localStorage.setItem("Chro-minluck-vwvh", JSON.stringify("35,28,60"));
+    };
+    if (previousLeft) div.style.left = previousLeft;
+    if (previousTop) div.style.top = previousTop;
+
+    const buttonDiv = document.createElement("div")
+    buttonDiv.id = "button-Div"
+
+    const infoButton = document.createElement("button");
+    infoButton.id = "info-button"
+    infoButton.textContent = "i"
+
+    infoButton.onclick = function () {
+        let position = JSON.parse(localStorage.getItem("Chro-minluck-vwvh")).split(",");
+        let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 22 Sept 2026\n\n Change tool's position / Set % for red text?\n\n" +
+            "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%", "35,28,60");
+        if (mes == null || mes == "") {
+            return
+        } else {
+            localStorage.setItem("Chro-minluck-vwvh", JSON.stringify(mes));
+            renderBox();
         }
     }
+
+    const minButton = document.createElement("button");
+    minButton.id = "minimise-button"
+    minButton.textContent = wasMinimised ? "+" : "-"
+    minButton.onclick = function () {
+        const minluckTable = document.getElementById("chro-minluck-table");
+        if (minButton.textContent == "-") {
+            minluckTable.classList.add("minimised");
+            minButton.textContent = "+";
+        } else if (minButton.textContent == "+") {
+            minluckTable.classList.remove("minimised");
+            minButton.textContent = "-";
+        }
+    }
+
+    const closeButton = document.createElement("button");
+    closeButton.id = "close-button";
+
+    closeButton.textContent = "x";
+    closeButton.onclick = function () {
+        document.body.removeChild(div);
+    };
+
+    const setupInfo = document.createElement("div")
+    setupInfo.className = "setup-info"
+    setupInfo.textContent = "Catch Rate Estimator"
+
+    const powerInfo = document.createElement("div")
+    powerInfo.className = "power-info"
+    powerInfo.textContent = "Power: ".concat(power)
+
+    const luckInfo = document.createElement("div")
+    luckInfo.className = "luck-info"
+    luckInfo.textContent = "Luck: ".concat(luck);
+
+    const locInfo = document.createElement("div")
+    locInfo.className = "loc-info"
+    locInfo.innerHTML = "Location: ".concat(locationName);
+    if (locationName == "Afterword Acres") {
+        locInfo.innerHTML = locInfo.innerHTML.concat("<p>Subjected to changes.");
+    }
+    else if (locationName == "Epilogue Falls") {
+        locInfo.innerHTML = locInfo.innerHTML.concat("<p>Subjected to changes.");
+    } else if (locationName == "Zugzwang's Tower") {
+        if (weaponName == "Technic Pawn Pincher") {
+            locInfo.innerHTML = locInfo.innerHTML.concat("<p>This trap has hidden stat changes<br>On Technic Pawn: + 10920 Power, + 51 Luck<br>On Mystic Pawn: - 60 Power, - 0.05 Luck");
+        } else if (weaponName == "Mystic Pawn Pincher") {
+            locInfo.innerHTML = locInfo.innerHTML.concat("<p>This trap has hidden stat changes<br>On Mystic Pawn: + 10920 Power, + 51 Luck<br>On Technic Pawn: - 60 Power, - 0.05 Luck");
+        } else if (weaponName == "Obvious Ambush Trap") {
+            locInfo.innerHTML = locInfo.innerHTML.concat("<p>This trap has hidden stat changes<br>On Technic mice: + 1800 Power, + 6 Luck<br>On Mystic mice: -2400 Power, - 9 Luck");
+        } else if (weaponName == "Blackstone Pass Trap") {
+            locInfo.innerHTML = locInfo.innerHTML.concat("<p>This trap has hidden stat changes<br>On Mystic mice: + 1800 Power, + 6 Luck<br>On Technic mice: -2400 Power, - 9 Luck");
+        }
+    }
+
+    setupInfo.appendChild(locInfo);
+    setupInfo.appendChild(powerInfo);
+    setupInfo.appendChild(luckInfo);
+
+    const table = document.createElement("table");
+    table.id = "chro-minluck-table"
+    if (wasMinimised) table.classList.add("minimised");
+
+    const miceheader = document.createElement("th");
+    miceheader.className = "chro-minluck-header-name"
+    miceheader.innerText = "Mouse Name"
+    table.appendChild(miceheader);
+
+    const arheader = document.createElement("th");
+    arheader.className = "chro-minluck-header-ar"
+    arheader.innerText = "AR"
+    table.appendChild(arheader);
+
+    const minluckheader = document.createElement("th");
+    minluckheader.className = "chro-minluck-header-minluck"
+    minluckheader.innerText = "Minluck"
+    table.appendChild(minluckheader);
+
+    const crheader = document.createElement("th");
+    crheader.className = "chro-minluck-header-cr"
+    crheader.innerText = "CRE"
+    table.appendChild(crheader);
+
+    results = results || calculateResults(powerType);
+    for (const mouse of results.rows) {
+        var row = document.createElement("tr");
+        row.className = "chro-minluck-row"
+        var mouseName = document.createElement("td");
+        mouseName.innerText = mouse.name;
+
+        //attraction rate-------
+        var aR = document.createElement("td");
+        aR.className = "chro-minluck-data-ar";
+        aR.innerText = mouse.ar;
+
+        //minluck----
+        var minLuck = document.createElement("td");
+        minLuck.className = "chro-minluck-data-minluck";
+        minLuck.innerText = mouse.minluck;
+        if (mouse.goodMinluck) {
+            minLuck.classList.add('good-minluck');
+        }
+
+        //catch rate-------
+        var cR = document.createElement("td");
+        cR.className = "chro-minluck-data-cr";
+        cR.innerText = mouse.cr;
+        if (mouse.cr == "100.00%") {
+            cR.classList.add('good-minluck');
+        } else if (parseFloat(mouse.cr) <= turnRed) {
+            cR.classList.add('bad-minluck');
+        }
+
+        row.appendChild(mouseName);
+        row.appendChild(aR);
+        row.appendChild(minLuck);
+        row.appendChild(cR);
+        table.appendChild(row);
+    }
+
+    var overAllStatRow = document.createElement("tr");
+    overAllStatRow.className = "chro-minluck-row"
+
+    var overAllStatTitle = document.createElement("td");
+    overAllStatTitle.innerText = "Overall Stat";
+    overAllStatTitle.className = "chro-minluck-header-name"
+
+    var overAllStatAR = document.createElement("td");
+    overAllStatAR.className = "chro-minluck-overall-ar"
+    if (!results.undefinedAr) {
+        overAllStatAR.innerText = convertDoubleToPercentage(results.overallAr);
+    } else {
+        arheader.innerText = ""
+    }
+
+    var overAllStatMinLuck = document.createElement("td");
+    overAllStatMinLuck.className = "chro-minluck-overall-minluck"
+    overAllStatMinLuck.innerText = results.overallMinluck;
+     if (adjustedTrapLuck >= results.overallMinluck) {
+        overAllStatMinLuck.classList.add('good-minluck');
+    }
+
+    var overAllStatCR = document.createElement("td");
+    overAllStatCR.className = "chro-minluck-overall-cr"
+    if (!results.undefinedAr) {
+        overAllStatCR.innerText = convertDoubleToPercentage(results.overallCr);
+        if (overAllStatCR.innerText == "100.00%") {
+            overAllStatCR.classList.add('good-minluck');
+        } else if (results.overallCr * 100 <= turnRed) {
+            overAllStatCR.classList.add('bad-minluck');
+        }
+    }
+
+    overAllStatRow.appendChild(overAllStatTitle);
+    overAllStatRow.appendChild(overAllStatAR);
+    overAllStatRow.appendChild(overAllStatMinLuck);
+    overAllStatRow.appendChild(overAllStatCR);
+    table.appendChild(overAllStatRow);
+
+    buttonDiv.appendChild(infoButton);
+    buttonDiv.appendChild(minButton);
+    buttonDiv.appendChild(closeButton);
+    div.appendChild(setupInfo);
+    div.appendChild(buttonDiv)
+    div.appendChild(table);
+    document.body.appendChild(div);
+    dragElement(div);
 }
 
 async function postReq(url, form) {
@@ -6046,8 +6045,7 @@ function convertDoubleToPercentage(value) {
 
 function mouseMinluck(mouseName, mouse_power, eff) {
     eff = eff / 100;
-    var adjustedMP = specialMPEff(mouseName, mouse_power, eff)[0];
-    var adjustedEff = specialMPEff(mouseName, mouse_power, eff)[1];
+    var [adjustedMP, adjustedEff] = specialMPEff(mouseName, mouse_power, eff);
 
     // Can't evalute infinity symbol, so was replaced with 9999 as minluck instead
     var infinitySym = String.fromCharCode(0x221E)
@@ -6086,8 +6084,7 @@ function calcTrapTotalPower(rawPower, powerBonus) {
 
 function calculateCR(mouseName, mPower, mEff) {
     mEff = mEff / 100;
-    var adjustedMP = specialMPEff(mouseName, mPower, mEff)[0];
-    var adjustedEff = specialMPEff(mouseName, mPower, mEff)[1];
+    var [adjustedMP, adjustedEff] = specialMPEff(mouseName, mPower, mEff);
     var result = CRSpecialBonusAndEffects(mouseName, adjustedMP, adjustedEff)
     return FinalCRModifier(result, mouseName);
 }
@@ -8131,60 +8128,62 @@ function trapChangeListener() {
     const originalOpen = XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype.open = function () {
         this.addEventListener("load", function () {
-            if (this.responseURL === "https://www.mousehuntgame.com/managers/ajax/users/changetrap.php") {
-                success: {
-                    colourClover()
-                }
+            if (this.status >= 200 && this.status < 300 &&
+                this.responseURL.startsWith("https://www.mousehuntgame.com/managers/ajax/users/changetrap.php")) {
+                setTimeout(colourClover, 0);
             }
         })
         originalOpen.apply(this, arguments);
     };
 };
 
-var lastSetupCache;
-async function colourClover(){
-    var button = $(".min-luck-button")[0];
+function getSetupCache() {
+    return JSON.stringify([
+        user.trap_power, user.trap_luck, user.trap_attraction_bonus,
+        user.trap_cheese_effect, user.trap_power_bonus, user.trap_power_type_name,
+        user.trinket_item_id, user.base_item_id, user.weapon_item_id,
+        user.bait_item_id, user.bait_quantity === 0, user.environment_id,
+        user.quests
+    ]);
+}
 
-    // Add any user properties that indicate trap setup has changed or mouse pool may have changed
-    var currentSetupCache = `
-        ${user.trap_power}
-        ${user.trap_luck}
-        ${user.trap_attraction_bonus}
-        ${user.trap_cheese_effect}
-        ${user.trap_luck}
-        ${user.trap_power}
-        ${user.trap_power_bonus}
-        ${user.trap_power_type_name}
-        ${user.trinket_item_id}
-        ${user.base_item_id}
-        ${user.weapon_item_id}
-        ${user.bait_item_id}
-        ${user.bait_quantity == 0}
-        ${user.environment_id}
-    `;
+function colourClover() {
+    colourUpdateRequested = true;
+    if (colourUpdatePromise) return colourUpdatePromise;
 
-    if (currentSetupCache != lastSetupCache) {
-        logger("Setup has changed, getting new data");
-        await refreshData();
-    }
-    lastSetupCache = currentSetupCache;
+    colourUpdatePromise = (async () => {
+        while (colourUpdateRequested) {
+            colourUpdateRequested = false;
+            const currentSetupCache = getSetupCache();
+            if (currentSetupCache !== lastSetupCache) {
+                logger("Setup has changed, getting new data");
+                try {
+                    const mice = await refreshData();
+                    if (getSetupCache() !== currentSetupCache) {
+                        colourUpdateRequested = true;
+                        continue;
+                    }
+                    tem_data = mice;
+                    lastSetupCache = currentSetupCache;
+                } catch (error) {
+                    console.error(error);
+                    return;
+                }
+            }
 
-    renderBox();
-
-    var data = $(".chro-minluck-data-minluck");
-    var count = 0;
-    for (var i=0; i<data.length; i++){
-        data[i].classList.contains("good-minluck") ? count++ : null
-    }
-    if (count/data.length == 1) {
-        button.classList.add("blue");
-    } else if (count/data.length >= 0.5) {
-        button.classList.add("green");
-    } else {
-        button.classList.add("red");
-    }
-
-    removeBox();
+            const button = document.querySelector(".min-luck-button");
+            if (!button) return;
+            const results = calculateResults(user.trap_power_type_name);
+            const fractionGood = results.rows.length ? results.goodMinluckCount / results.rows.length : 0;
+            button.classList.remove("blue", "green", "red");
+            button.classList.add(fractionGood === 1 ? "blue" : fractionGood >= 0.5 ? "green" : "red");
+            if (document.getElementById("minluck-list")) renderBox(results);
+        }
+    })().finally(() => {
+        colourUpdatePromise = null;
+        if (colourUpdateRequested) colourClover();
+    });
+    return colourUpdatePromise;
 }
 
 
