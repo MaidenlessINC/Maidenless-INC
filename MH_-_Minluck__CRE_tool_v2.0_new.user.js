@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      6.0.0
+// @version      6.1.0
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -28,6 +28,809 @@ const debugLog = false;
 let lastSetupCache;
 let colourUpdatePromise;
 let colourUpdateRequested = false;
+
+const AR_DATA_URL = 'https://tsitu.github.io/MH-Tools/data/json/populations-cre-setup.json';
+const AR_CACHE_TTL_MS = 48 * 60 * 60 * 1000;
+const AR_CACHE_KEY = 'Chro-minluck-attraction-v1';
+const AR_RETRY_MS = 5 * 60 * 1000;
+let attractionCache;
+let attractionLoadPromise;
+let attractionLastAttempt = -Infinity;
+let attractionCacheRead = false;
+let attractionLoadError = '';
+let attractionCharmDataset;
+let attractionCharmKeys;
+
+// Stage detection adapted from tsitu/MH-Tools src/bookmarklet/bm-cre.js.
+// Copyright MH-Tools contributors. Apache-2.0; see licenses/MH-Tools.txt.
+// Changes: explicit user argument, scoped helpers, guarded by resolveHuntContext().
+  function resolveTsituStage(user, userLocation, userBase, userCheese) {
+    const urlParams = {};
+    const contains = (collection, item) => collection.indexOf(item) > -1;
+    var sublocation;
+    var userQuests = user["quests"];
+    var userViewingAtts = user["viewing_atts"];
+
+    if (userLocation === "Balack's Cove") {
+      var tide = userQuests["QuestBalacksCove"]["tide"]["level"];
+      if (tide === "low") {
+        return "Low Tide";
+      } else if (tide === "med") {
+        return "Medium Tide";
+      } else if (tide === "high") {
+        return "High Tide";
+      }
+    } else if (userLocation === "Burroughs Rift") {
+      var tier = userQuests["QuestRiftBurroughs"]["mist_tier"];
+      var tierMapping = {
+        tier_0: "Mist Level 0",
+        tier_1: "Mist Level 1-5",
+        tier_2: "Mist Level 6-18",
+        tier_3: "Mist Level 19-20"
+      };
+      return userCheese === "Undead String Emmental"
+        ? userCheese
+        : tierMapping[tier];
+    } else if (userLocation === "Fiery Warpath") {
+      var wave = userViewingAtts["desert_warpath"]["wave"];
+      if (wave === "portal") return "Portal";
+      return "Wave " + wave;
+    } else if (userLocation === "Fort Rox") {
+      var fortRoxQuest = userQuests["QuestFortRox"];
+      var tmpPhase = fortRoxQuest["current_phase"];
+      if (tmpPhase === "day") {
+        return "Day";
+      } else if (tmpPhase === "dawn") {
+        return "Dawn";
+      } else if (tmpPhase === "night") {
+        var stage = fortRoxQuest["current_stage"];
+        var stages = {
+          stage_one: "Twilight",
+          stage_two: "Midnight",
+          stage_three: "Pitch",
+          stage_four: "Utter Darkness",
+          stage_five: "First Light"
+        };
+        return stages[stage];
+      } else if (fortRoxQuest["is_lair"]) {
+        return "Heart of the Meteor";
+      } else {
+        return tmpPhase;
+      }
+    } else if (userLocation === "Gnawnian Express Station") {
+      var onTrain = userQuests["QuestTrainStation"]["on_train"];
+      if (onTrain) {
+        var trainData = userViewingAtts["tournament"]["minigame"];
+        var stageName = trainData["name"];
+        if (stageName === "Supply Depot") {
+          var supplyHoarder = trainData["supply_hoarder_turns"];
+          if (supplyHoarder > 0) {
+            return "Supply Depot (Supply Rush)";
+          } else if (supplyHoarder === 0) {
+            return "Supply Depot (No Supply Rush)";
+          }
+        } else if (
+          stageName === "Raider River" ||
+          stageName === "Daredevil Canyon"
+        ) {
+          return stageName;
+        }
+      }
+    } else if (userLocation === "Iceberg") {
+      var sublocation = userQuests["QuestIceberg"]["current_phase"];
+      if (sublocation === "General") {
+        return "Generals";
+      }
+      if (sublocation === "Hidden Depths") {
+        return "The Hidden Depths";
+      }
+      if (
+        (sublocation === "Treacherous Tunnels" ||
+          sublocation === "Bombing Run" ||
+          sublocation === "The Mad Depths") &&
+        userBase === "Magnet Base"
+      ) {
+        return sublocation + " (Magnet)";
+      } else if (
+        sublocation === "The Mad Depths" &&
+        userBase === "Hearthstone Base"
+      ) {
+        return sublocation + " (Hearthstone)";
+      } else if (
+        (sublocation === "Treacherous Tunnels" ||
+          sublocation === "Bombing Run" ||
+          sublocation === "The Mad Depths") &&
+        (userBase === "Ultimate Iceberg Base" ||
+          userBase === "Iceberg Boiler Base")
+      ) {
+        return sublocation + " (Ultimate Iceberg)";
+      }
+      return sublocation;
+    } else if (userLocation === "Labyrinth") {
+      var hallwayName = userQuests["QuestLabyrinth"]["hallway_name"];
+
+      if (contains(hallwayName, "Short"))
+        hallwayName = hallwayName.slice(6, hallwayName.length);
+      else if (contains(hallwayName, "Medium"))
+        hallwayName = hallwayName.slice(7, hallwayName.length);
+      else if (contains(hallwayName, "Long"))
+        hallwayName = hallwayName.slice(5, hallwayName.length);
+      hallwayName = hallwayName.slice(0, hallwayName.indexOf(" Hallway"));
+      return hallwayName;
+    } else if (userLocation === "Living Garden") {
+      if (
+        userQuests["QuestLivingGarden"]["minigame"]["bucket_state"] === "dumped"
+      ) {
+        return "Poured";
+      }
+    } else if (userLocation === "Moussu Picchu") {
+      var UP_DIRECTION = "up";
+      var LEVEL_KEY = "level";
+      var DIRECTION_KEY = "direction";
+      var RAIN_KEY = "rain";
+      var WIND_KEY = "wind";
+      var PERCENT_KEY = "percent";
+
+      var elements = userQuests["QuestMoussuPicchu"]["elements"];
+      var stormLevel = elements["storm"][LEVEL_KEY];
+
+      // storm.level tends to be inaccurate behind near thresholds
+      if (userCheese === "Dragonvine Cheese") {
+        var stormPercent = Math.min(elements[RAIN_KEY][PERCENT_KEY], elements[WIND_KEY][PERCENT_KEY]);
+        if (stormPercent === 100) {
+          stormLevel = "max";
+        } else if (stormPercent >= 80) {
+          stormLevel = "high";
+        } else if (stormPercent >= 35) {
+          stormLevel = "medium";
+        } else {
+          stormLevel = "low";
+        }
+      }
+
+      if (stormLevel !== "none") {
+        return "Storm " + stormLevel;
+      } else if (elements[RAIN_KEY][DIRECTION_KEY] === UP_DIRECTION) {
+        return "Rain " + elements[RAIN_KEY][LEVEL_KEY];
+      } else if (elements[WIND_KEY][DIRECTION_KEY] === UP_DIRECTION) {
+        return "Wind " + elements[WIND_KEY][LEVEL_KEY];
+      }
+    } else if (userLocation === "Twisted Garden") {
+      if (
+        userQuests["QuestLivingGarden"]["minigame"]["vials_state"] === "dumped"
+      ) {
+        return "Poured";
+      }
+    } else if (userLocation === "Lost City") {
+      if (userQuests["QuestLostCity"]["minigame"]["is_cursed"] === 1) {
+        return "Cursed";
+      }
+    } else if (userLocation === "Cursed City") {
+      if (userQuests["QuestLostCity"]["minigame"]["is_cursed"]) {
+        return "Cursed";
+      }
+    } else if (userLocation === "Sand Dunes") {
+      if (userQuests["QuestSandDunes"]["minigame"]["has_stampede"]) {
+        return "Stampede";
+      }
+    } else if (userLocation === "Seasonal Garden") {
+      var season = userViewingAtts["season"];
+      var seasonMapping = {
+        fl: "Fall",
+        wr: "Winter",
+        sg: "Spring",
+        sr: "Summer"
+      };
+      return seasonMapping[season];
+    } else if (userLocation === "Sunken City") {
+      sublocation = userQuests["QuestSunkenCity"]["zone_name"];
+      if (sublocation === "Sunken City") {
+        sublocation = "Docked";
+      }
+      return sublocation;
+    } else if (userLocation === "Toxic Spill") {
+      var pollutionQuest = userQuests["QuestPollutionOutbreak"];
+      var titles = pollutionQuest["titles"];
+
+      var spillSublocationMap = {
+        archduke_archduchess: "Archduke/Archduchess",
+        grand_duke: "Grand Duke/Grand Duchess",
+        duke_dutchess: "Duke/Duchess",
+        count_countess: "Count/Countess",
+        baron_baroness: "Baron/Baroness",
+        lord_lady: "Lord/Lady",
+        hero: "Hero",
+        knight: "Knight"
+      };
+
+      // TODO: Investigate possibility of using nextStatus and rising/falling
+      //  to determine this instead of looping over titles
+      for (var key in titles) {
+        if (titles.hasOwnProperty(key) && titles[key].active) {
+          sublocation = spillSublocationMap[key];
+        }
+      }
+      return sublocation;
+    } else if (userLocation === "Whisker Woods Rift") {
+      var zones = userQuests["QuestRiftWhiskerWoods"]["zones"];
+      var clearing = zones["clearing"]["status"];
+      var tree = zones["tree"]["status"];
+      var lagoon = zones["lagoon"]["status"];
+      var state = "";
+      state += clearing + "/" + tree + "/" + lagoon;
+      state = state.replace(/low/g, "Low");
+      state = state.replace(/high/g, "Medium");
+      state = state.replace(/boss/g, "High");
+      return state;
+    } else if (userLocation === "Fungal Cavern") {
+      return userBase === "Gemology Base"
+        ? "Gemology Base"
+        : "Not Gemology";
+    } else if (userLocation === "Zokor") {
+      var quest = userQuests["QuestAncientCity"];
+
+      var districtname = quest.district_name;
+      var district_type = quest.clue_name;
+      var district_tier = quest.district_tier;
+
+      if (contains(districtname, "Minotaur")) {
+        return "Lair - Each 30+";
+      } else if (district_type == "Treasury") {
+        var tiers = ["15+", "50+"]
+        return `Treasure ${tiers[district_tier - 1]}`
+      } else if (district_type == "Farming") {
+        var tiers = ["0", "50+"]
+        return `Farming ${tiers[district_tier - 1]}`
+      } else {
+        var tiers = ["15+", "50+", "80+"]
+        return `${district_type} ${tiers[district_tier - 1]}`
+      }
+    } else if (userLocation === "Furoma Rift") {
+      if (userQuests["QuestRiftFuroma"]["droid"]["charge_level"]) {
+        return "Pagoda";
+      } else {
+        return "Training Grounds";
+      }
+    } else if (userLocation === "Bristle Woods Rift") {
+      // TODO: "Rift Acolyte Tower" = "Entrance" (is this from chamber_name?)
+      var stage = [];
+      stage.push(userQuests["QuestRiftBristleWoods"]["chamber_name"]);
+      if (
+        userQuests["QuestRiftBristleWoods"]["status_effects"]["ng"] === "active"
+      ) {
+        stage.push("(Paladin's Bane)");
+      }
+      if (
+        userQuests["QuestRiftBristleWoods"]["status_effects"]["st"] === "active"
+      ) {
+        stage.push("(Pursued)");
+      }
+      return stage.join(" ");
+    } else if (userLocation === "Zugzwang's Tower") {
+      var mystic = userViewingAtts["zzt_mage_progress"];
+      var tech = userViewingAtts["zzt_tech_progress"];
+
+      const isDoubleRun = (mystic == 16 || tech == 16) && userCheese !== "Checkmate Cheese" || (mystic == 16 && tech == 16);
+      const selector = isDoubleRun ? Math.min : Math.max;
+      const progress = selector(mystic, tech);
+      const type = mystic == progress ? "Mystic" : "Technic";
+
+      let piece;
+      if (progress < 8) {
+        piece = "Pawn Pincher";
+      } else if (progress < 10) {
+        piece = "Knights";
+      } else if (progress < 12) {
+        piece = "Bishops";
+      } else if (progress < 14) {
+        piece = "Rooks";
+      } else if (progress < 15) {
+        piece = "Queen";
+      } else if (progress < 16) {
+        piece = "King";
+      } else {
+        piece = "Chess Master";
+      }
+
+      if (isDoubleRun && piece == "Chess Master") {
+        return "Chess Master - Double Run";
+      }
+
+      return `${type} ${piece}${isDoubleRun ? " - Double Run" : ""}`;
+
+    } else if (userLocation === "Claw Shot City") {
+      // TODO: Separate Bounty hunter attracted/not once new data rolls in
+      var poster_active = userQuests["QuestClawShotCity"]["map_active"];
+      var has_wanted_poster =
+        userQuests["QuestClawShotCity"]["has_wanted_poster"];
+      if (!poster_active) {
+        return "No Wanted Poster Open";
+      } else if (poster_active && !has_wanted_poster) {
+        return "Crew";
+      }
+    } else if (userLocation === "Mousoleum") {
+      return userQuests["QuestMousoleum"]["has_wall"] ? "Has Wall" : "No Wall";
+    } else if (userLocation === "Queso Geyser") {
+      var geyserState = userQuests["QuestQuesoGeyser"]["state"];
+      if (geyserState === "collecting") {
+        return "Cork Collecting";
+      } else if (geyserState === "corked") {
+        return "Pressure Building";
+      } else if (geyserState === "eruption") {
+        return userQuests["QuestQuesoGeyser"]["state_name"];
+      }
+    } else if (userLocation === "Forbidden Grove") {
+      return user["viewing_atts"]["grove_open"] ? "Open" : "Closed";
+    } else if (userLocation === "Harbour") {
+      if (
+        userQuests["QuestHarbour"]["status"] === "searchStarted" &&
+        !userQuests["QuestHarbour"]["can_claim"]
+      ) {
+        return "On Bounty";
+      } else {
+        return "No Bounty";
+      }
+    } else if (userLocation === "Valour Rift") {
+      if (userQuests["QuestRiftValour"]["state"] === "farming") {
+        return "Outside";
+      } else if (userQuests["QuestRiftValour"]["state"] === "tower") {
+        var vrFloorType = userQuests["QuestRiftValour"]["floor_type"];
+        urlParams["vrFloorType"] =
+          vrFloorType >= 1 && vrFloorType <= 7 ? vrFloorType - 1 : 0;
+
+        var floorNum = userQuests["QuestRiftValour"]["floor"] || 1;
+        var floorStr = userQuests["QuestRiftValour"]["is_eclipse_mode"]
+          ? "Umbra "
+          : "";
+
+        if (floorNum % 8 === 0) floorStr += "Eclipse";
+        else if (floorNum <= 7) floorStr += "Floors 1-7";
+        else if (floorNum <= 15) floorStr += "Floors 9-15";
+        else if (floorNum <= 23) floorStr += "Floors 17-23";
+        else if (floorNum >= 25) floorStr += "Floors 25-31+";
+
+        return floorStr;
+      }
+    } else if (userLocation === "Floating Islands") {
+      var fi = userQuests["QuestFloatingIslands"]["hunting_site_atts"];
+      var fiStage = fi["island_name"].match(/^(\w+) .*$/)[1];
+
+      if (fi["is_low_tier_island"]) {
+        fiStage += " Low";
+      } else if (fi["is_high_tier_island"]) {
+        fiStage += " High";
+      } else if (fi["is_vault_island"]) {
+        fiStage += " Palace";
+      }
+
+      if (fi["is_enemy_encounter"]) {
+        if (fi["is_low_tier_island"]) {
+          return "Sky Wardens";
+        } else if (fi["is_high_tier_island"]) {
+          return "Sky Paragons";
+        } else if (fi["is_vault_island"]) {
+          return "Empress";
+        }
+      } else if (userCheese === "Sky Pirate Swiss Cheese") {
+        const piratesNum = fi["activated_island_mod_types"].filter(t => t === "sky_pirates").length;
+        return `${fi["is_vault_island"] ? "Palace" : "Low|High"} - ${piratesNum}x Pirates`;
+      } else if ((userCheese === "Cloud Cheesecake" || userCheese === "Extra Rich Cloud Cheesecake") &&
+                  fi["activated_island_mod_types"].filter(i => i === "loot_cache").length >= 2) {
+        fiStage += ` - Loot x${fi["activated_island_mod_types"].filter(i => i === "loot_cache").length}`
+      } else if (fi["is_vault_island"] && Array.isArray(fi["activated_island_mod_types"])) {
+        const panels = {};
+        fi["activated_island_mod_types"].forEach(t => t in panels ? panels[t]++ : panels[t] = 1);
+        let counter = 0;
+        let mod_type = "";
+        for (const [type, num] of Object.entries(panels)) {
+            if (num >= 3) {
+                counter = num;
+                mod_type = fi["island_mod_panels"].filter(p => p.type === type)[0].name;
+            }
+        }
+        const shortMod = {
+          "Ancient Jade Stockpile": "Jade",
+          "Empyrean Seal Stowage": "Emp Seal",
+          "Ore and Glass Deposit": "Glass + Ore",
+          "Sky Pirate Den": "Pirates",
+        };
+        if (counter && shortMod[mod_type]) {
+          fiStage += ` - ${counter}x ${shortMod[mod_type]}`;
+        }
+      }
+      return fiStage
+    } else if (userLocation === "Table of Contents") {
+      var toc = userQuests["QuestTableOfContents"];
+      if (toc["is_writing"]) {
+        if (toc["progress"]["type"] === "encyclopedia") {
+          return "Encyclopedia";
+        } else {
+          return "Pre-Encyclopedia";
+        }
+      }
+    } else if (userLocation === "Foreword Farm") {
+      var farmState = userQuests["QuestForewordFarm"]["mice_state"];
+      if (farmState === "no_plants") {
+        return "No Plants";
+      } else if (farmState === "one_plant") {
+        return "One Plant";
+      } else if (farmState === "two_plants") {
+        return "Two Plants";
+      } else if (farmState === "three_plants") {
+        return "Three Plants";
+      } else if (farmState === "three_papyrus") {
+        return "Three Papyrus";
+      } else if (farmState === "boss") {
+        return "Boss";
+      }
+    } else if (userLocation === "Bountiful Beanstalk") {
+      const bbQuest = userQuests["QuestBountifulBeanstalk"];
+      if (bbQuest["in_castle"]) {
+        if (bbQuest["castle"]["is_boss_encounter"]) {
+          return "Castle Giants";
+        } else {
+          return bbQuest["castle"]["current_floor"]["name"].replace(" Floor", "");
+        }
+      } else {
+        return bbQuest["beanstalk"]["is_boss_encounter"]
+          ? "Beanstalk Boss"
+          : "Beanstalk"
+      }
+    } else if (userLocation === "School of Sorcery") {
+      const sosoQuest = userQuests["QuestSchoolOfSorcery"];
+      const course = sosoQuest["current_course"];
+      if (course["course_type"] === "arcane_101_course") {
+        return course["is_boss_encounter"] ? "Arcane Arts - Boss" : "Arcane Arts";
+      } else if (course["course_type"] === "shadow_101_course") {
+        return course["is_boss_encounter"] ? "Shadow Sciences - Boss" : "Shadow Sciences";
+      } else if (course["course_type"] === "exam_course") {
+        let pName = course["is_boss_encounter"] ? "Final Exam - Boss" : "Final Exam - ";
+        if (course["is_boss_encounter"]) return pName;
+        if (course["power_type"] === "arcane") pName += "Arcane";
+        if (course["power_type"] === "shadow") pName += "Shadow";
+        return pName;
+      } else {
+        return "Hallway";
+      }
+    } else if (userLocation === "Draconic Depths") {
+      const ddQuest = userQuests["QuestDraconicDepths"];
+      if (ddQuest["in_cavern"]) {
+        const cavernCategory = ddQuest["cavern"]["category"]; // "fire" | "ice" | "poison" | "elemental"
+        const category = cavernCategory.charAt(0).toUpperCase() + cavernCategory.slice(1);
+
+        const currentTier = ddQuest.cavern.loot_tier.current_tier;
+        const lootTiers = ddQuest.cavern.loot_tier.tier_data;
+
+        // if we're not at the last tier (currentTier is one indexed), then we need a range '0-99'
+        // which consists of the current tier threshold and the next tier threshold - 1
+        // otherwise, we just need the a number '750+'
+        let range;
+        if (currentTier < lootTiers.length) {
+            range = `${lootTiers[currentTier - 1].threshold}-${lootTiers[currentTier].threshold - 1}`;
+        } else {
+            range = `${lootTiers[currentTier - 1].threshold}+`;
+        }
+
+        return `Cavern: ${category} ${range}`;
+      } else {
+        return "Crucible Forge";
+      }
+    } else if (userLocation === "Afterword Acres") {
+      const tier = userQuests["QuestAfterwordAcres"].blight_tier
+      if (tier === "tier_1") {
+        return "1x"
+      } else if (tier === "tier_2") {
+        return "2x"
+      } else if (tier === "tier_3") {
+        return "4x"
+      } else if (tier === "tier_4") {
+        return "8x"
+      }
+    } else if (userLocation === "Epilogue Falls") {
+      const efQuest = userQuests["QuestEpilogueFalls"];
+      if (!efQuest.on_rapids) {
+        return "Shore";
+      }
+
+      return efQuest.rapids.zone_data.name.replace(" Zone", "");
+    } else if (userLocation === "Ice Fortress") {
+      const ifQuest = userQuests["QuestIceFortress"];
+      if (ifQuest.shield.is_broken === true) {
+        return "Boss";
+      }
+    } else if (userLocation === "Conclusion Cliffs") {
+      const ccQuest = userQuests["QuestConclusionCliffs"];
+      const story = ccQuest["story"];
+      if (!story["is_writing"]) {
+        return "Not Writing";
+      } else {
+        if (story["is_postscript"]) {
+          if (story["story_content"].some(c => c["genre_type"] === "fantasy")) {
+            return "Fantasy Postscript";
+          } else {
+            return "Postscript";
+          }
+        } else {
+          return "Writing " + story["current_chapter"]["genre_type"].charAt(0).toUpperCase() + story["current_chapter"]["genre_type"].slice(1);
+        }
+      }
+    } else if (userLocation === "SUPER|brie+ Factory") {
+      var sbfAtts = userQuests["QuestSuperBrieFactory"]["factory_atts"];
+      if (sbfAtts["boss_warning"] === true) {
+        return "Boss";
+      }
+      var sbfRoomMap = {
+        pumping_room: "Pump Room",
+        mixing_room: "Mixing Room",
+        break_room: "Break Room",
+        quality_assurance_room: "QA Room"
+      };
+      var sbfStage = sbfRoomMap[sbfAtts["current_room"]];
+      if (sbfStage && userCheese.indexOf("Coggy Colby") >= 0) {
+        return sbfStage;
+      }
+      return "Any Room";
+    } else if (userLocation === "Cerulean Skyport") {
+      const quest = userQuests["QuestCeruleanSkyport"];
+      const isShipping = quest["is_shipping"];
+      const isIntercepting = quest["is_intercepting"];
+
+      if (isIntercepting) {
+        const area = quest["current_raid"]["name"];
+        return `Intercepting - ${area}`;
+      } else if (isShipping) {
+        const type = (() => {
+          switch (quest["current_shipment"]["type"]) {
+            case 'gas_shipment':
+              return 'Atmo';
+            case 'cloudstone_shipment':
+              return 'Mining';
+            case 'spice_shipment':
+              return 'Spice';
+          }
+        })();
+        return `Shipping - ${type}`;
+      }
+
+      return "Docked";
+    }
+
+    return "N/A";
+  }
+
+
+function isRecord(value) {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function validateAttractionDataset(data) {
+    if (!isRecord(data) || !Object.keys(data).length) throw new Error('Empty attraction dataset');
+    for (const stages of Object.values(data)) {
+        if (!isRecord(stages) || !Object.keys(stages).length) throw new Error('Invalid location data');
+        for (const cheeses of Object.values(stages)) {
+            if (!isRecord(cheeses)) throw new Error('Invalid stage data');
+            for (const charms of Object.values(cheeses)) {
+                if (!isRecord(charms)) throw new Error('Invalid cheese data');
+                for (const population of Object.values(charms)) {
+                    if (!isRecord(population) || !Object.keys(population).length) throw new Error('Invalid population');
+                    for (const [name, rate] of Object.entries(population)) {
+                        if (!Number.isFinite(rate) || rate < 0 || (name !== 'SampleSize' && rate > 100)) {
+                            throw new Error('Invalid attraction percentage');
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return data;
+}
+
+function readAttractionCache() {
+    if (attractionCacheRead) return;
+    attractionCacheRead = true;
+    try {
+        const saved = JSON.parse(localStorage.getItem(AR_CACHE_KEY));
+        if (saved?.version === 1 && saved.sourceUrl === AR_DATA_URL &&
+            Number.isFinite(saved.retrievedAt) && saved.retrievedAt > 0 && saved.retrievedAt <= Date.now()) {
+            validateAttractionDataset(saved.data);
+            attractionCache = saved;
+        }
+    } catch (error) {
+        logger('AR cache unavailable: ' + error.message);
+    }
+}
+
+function loadAttractionDataset() {
+    readAttractionCache();
+    if (attractionLoadPromise) return attractionLoadPromise;
+    const now = Date.now();
+    if ((attractionCache && now - attractionCache.retrievedAt < AR_CACHE_TTL_MS) ||
+        now - attractionLastAttempt < AR_RETRY_MS) return Promise.resolve(attractionCache);
+    attractionLastAttempt = now;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    attractionLoadPromise = (async () => {
+        try {
+            const response = await fetch(AR_DATA_URL, { signal: controller.signal, credentials: 'omit' });
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const data = validateAttractionDataset(await response.json());
+            attractionCache = { version: 1, sourceUrl: AR_DATA_URL, retrievedAt: Date.now(), data };
+            attractionLoadError = '';
+            try { localStorage.setItem(AR_CACHE_KEY, JSON.stringify(attractionCache)); }
+            catch (error) { logger('AR cache storage unavailable: ' + error.message); }
+        } catch (error) {
+            attractionLoadError = 'AR refresh failed; ' + (attractionCache ? 'using saved data' : 'no remote data available');
+            logger(attractionLoadError + ': ' + error.message);
+        } finally {
+            clearTimeout(timeout);
+            attractionLoadPromise = null;
+            // The dataset has no player context. Resolve against the latest setup on completion.
+            colourClover();
+        }
+        return attractionCache;
+    })();
+    return attractionLoadPromise;
+}
+
+function sourceCheeseKey(name) {
+    if (!name) return '';
+    if (name.includes('SUPER|brie+')) return 'SB+';
+    if (name === 'Empowered Brie') return 'Brie';
+    if (name === 'Leaping Lavish Beanster Cheese') return 'Lavish Beanster';
+    return name.replace(/ Cheese$/, '');
+}
+
+function resolveHuntContext() {
+    const context = {
+        locationKey: locationName, stageKey: null, cheeseKey: sourceCheeseKey(baitName),
+        charmKey: (charmName || '').replace(/ Charm$/, '') || '-',
+        stageLabel: 'Unknown stage', reason: ''
+    };
+    if (!baitName || user.bait_quantity === 0) {
+        context.reason = 'No cheese armed';
+        return context;
+    }
+    try {
+        let stage = locationName === 'School of Sorcery' && user.quests?.QuestSchoolOfSorcery?.in_course === false ?
+            'Hallway' : resolveTsituStage(user, locationName, baseName, baitName);
+        if (locationName === 'Table of Contents' && stage === 'N/A') stage = 'Not Writing';
+        if (locationName === 'Zokor' && stage === 'Farming 0') stage = 'Farming 0+';
+        if (locationName === 'Zokor' && getStageForZokor()[2] === 'Boss') {
+            // Tsitu pools boss/non-boss encounters under district tiers. Preserve
+            // the existing boss-specific local distribution for these encounters.
+            context.useLocal = true;
+        }
+        if (locationName === 'School of Sorcery' && !user.quests.QuestSchoolOfSorcery?.in_course) stage = 'Hallway';
+        // N/A is only a confirmed default when the detector recognizes this location,
+        // or the source has no stage subdivision at all.
+        if (stage === 'N/A') {
+            const stages = attractionCache?.data[locationName];
+            const defaultLocations = ['Prologue Pond', 'Living Garden', 'Twisted Garden', 'Lost City', 'Cursed City',
+                'Sand Dunes', 'Ice Fortress', 'Gnawnian Express Station', 'Moussu Picchu'];
+            if (defaultLocations.includes(locationName) || (stages && Object.keys(stages).length === 1 && stages['-'])) stage = '-';
+            else stage = null;
+        }
+        context.stageKey = stage || null;
+        context.stageLabel = stage === '-' ? 'No stage' : stage || 'Unknown stage';
+        if (!context.stageKey) context.reason = 'Stage not supported';
+    } catch (error) {
+        context.reason = 'Stage state unavailable';
+    }
+    return context;
+}
+
+// Baselines from MH-Tools data/cheese-attraction.js; absent specialty cheeses
+// use the same 100% baseline as Tsitu's CRE. See licenses/MH-Tools.txt.
+function getSourceCheeseAttraction(cheese) {
+    const baselines = {
+        'Arctic Asiago': .9, 'Bland Queso': .9, 'Brie': .85, 'Brie String': .85,
+        'Candy Corn': .97, 'Cheddar': .7, 'Cherry': .88, 'Crimson': .9,
+        'Empowered Brie': .85, 'Festive Feta': .9, 'Ghoulgonzola': .8957,
+        'Gilded': .85, 'Gingerbread': .9, 'Gouda': .9, 'Marble': .75,
+        'Marble String': .75, 'Mozzarella': .7, 'Nutmeg': .9, 'Seasoned Gouda': .9,
+        'Snowball Bocconcini': .9, 'Swiss': .8, 'Swiss String': .8, 'White Cheddar': .7
+    };
+    const baseline = baselines[cheese] ?? 1;
+    const bonus = Math.max(0, Math.min(1, Number(user.trap_attraction_bonus) || 0));
+    return baseline + (1 - baseline) * bonus;
+}
+
+function normalizePopulation(population, scale, expectedMass = 1) {
+    const shares = Object.create(null);
+    let total = 0;
+    for (const [name, value] of Object.entries(population)) {
+        if (name === 'SampleSize' || name === 'FTC') continue;
+        if (!Number.isFinite(value) || value < 0 || value * scale > 1) return null;
+        shares[name] = value * scale;
+        total += shares[name];
+    }
+    if (!Object.keys(shares).length || expectedMass <= 0 || Math.abs(total - expectedMass) > .005) return null;
+    // Only repair small rounding drift in a complete distribution.
+    for (const name of Object.keys(shares)) shares[name] /= total;
+    return shares;
+}
+
+function sourceMouseName(name) {
+    if (name === 'Thunderlord') return '⚡Thunderlord⚡';
+    if (locationName === 'Valour Rift' && (name === 'Floor Basic' || name === 'Floor Champion')) {
+        const mice = name === 'Floor Basic' ?
+            ['Puppetto', 'Cutpurse', 'Martial', 'One-Mouse Band', 'Mouse of Elements', 'Cursed Crusader', 'Withered Remains'] :
+            ['Puppet Champion', 'Champion Thief', 'Praetorian Champion', 'Champion Danseuse', 'Magic Champion', 'Fallen Champion Footman', 'Arch Champion Necromancer'];
+        const floorType = user.quests?.QuestRiftValour?.floor_type;
+        return mice[floorType - 1] || name;
+    }
+    return name;
+}
+
+function changesAttractionPool(charm) {
+    if (attractionCharmDataset !== attractionCache?.data || !attractionCharmKeys) {
+        attractionCharmDataset = attractionCache?.data;
+        attractionCharmKeys = new Set(['Scholar', 'Gargantua', 'Supply Schedule', 'Roof Rack', 'Door Guard',
+            'Greasy Glob', 'Dusty Coal', 'Black Powder', 'Magmatic Crystal', 'Artisan', 'Grub Scent',
+            'Shattering', 'Grubling Chow', 'Softserve', 'Mining', 'Rift Antiskele', 'Antiskele',
+            'Safeguard', 'Realm Ripper', "Prospector's", 'Factory Repair', 'Rotten', 'Super Rotten',
+            'Cherry', 'Gnarled', 'Stagnant', 'Taunting']);
+        for (const stages of Object.values(attractionCharmDataset || {})) {
+            for (const cheeses of Object.values(stages)) {
+                for (const charms of Object.values(cheeses)) {
+                    for (const name of Object.keys(charms)) {
+                        if (name !== '-') attractionCharmKeys.add(name.replace(/ Charm$/, ''));
+                    }
+                }
+            }
+        }
+    }
+    return attractionCharmKeys.has(charm) || /Warpath|Attraction|Scent/.test(charm);
+}
+
+function getAttractionPopulation(context) {
+    readAttractionCache();
+    const unavailable = reason => ({ status: 'unavailable', reason, context, rates: Object.create(null) });
+    if (context.reason) return unavailable(context.reason);
+    const cheese = context.useLocal ? null : attractionCache?.data[context.locationKey]?.[context.stageKey]?.[context.cheeseKey];
+    if (cheese) {
+        const charm = context.charmKey;
+        const exactKey = Object.hasOwn(cheese, charm) ? charm : Object.hasOwn(cheese, charm + ' Charm') ? charm + ' Charm' : null;
+        // A source-known attraction charm must not fall back to an ordinary population.
+        if (!exactKey && changesAttractionPool(charm)) {
+            return unavailable('No AR population for this attraction-changing charm');
+        }
+        const raw = cheese[exactKey || '-'];
+        if (!raw) return unavailable('No AR population for this charm');
+        const shares = normalizePopulation(raw, .01);
+        if (!shares) return unavailable('Source population is incomplete or invalid');
+        // Pawn Pincher populations explicitly assume the corresponding pincher weapon.
+        if (locationName === "Zugzwang's Tower" && context.stageKey.includes('Pawn Pincher') &&
+            weaponName !== context.stageKey.split(' - ')[0]) return unavailable('AR requires the matching Pawn Pincher setup');
+        const attraction = getSourceCheeseAttraction(context.cheeseKey);
+        const rates = Object.create(null);
+        for (const [name, share] of Object.entries(shares)) {
+            const resolvedName = sourceMouseName(name);
+            rates[resolvedName] = (rates[resolvedName] || 0) + share * attraction;
+        }
+        return { status: 'complete', rates, attraction, context, source: 'Tsitu',
+            sampleSize: raw.SampleSize, retrievedAt: attractionCache.retrievedAt,
+            stale: Date.now() - attractionCache.retrievedAt >= AR_CACHE_TTL_MS,
+            reason: attractionLoadError };
+    }
+    // Exact legacy states remain useful offline; they never fill holes in a remote population.
+    try {
+        const legacy = getArInfo();
+        if (Object.hasOwn(legacy, 'Invalid')) return unavailable(attractionLoadPromise ? 'Loading AR data' : 'No AR population for this setup');
+        const failureToAttract = legacy.FTC;
+        const expectedMass = failureToAttract > 0 ? 1 - failureToAttract : 1;
+        const shares = normalizePopulation(legacy, 1, expectedMass);
+        if (!shares) return unavailable('Local population is incomplete');
+        if (changesAttractionPool(context.charmKey)) return unavailable('Local fallback does not distinguish attraction-changing charms');
+        const attraction = failureToAttract < 0 ? getSourceCheeseAttraction(context.cheeseKey) :
+            failureToAttract > 0 ? expectedMass + failureToAttract * Math.max(0, Math.min(1, basicTrapArBonus)) : 1;
+        const rates = Object.create(null);
+        for (const [name, share] of Object.entries(shares)) rates[name] = share * attraction;
+        return { status: 'complete', rates, attraction, context, source: 'Local fallback', reason: attractionLoadError };
+    } catch (error) {
+        return unavailable('No AR population for this setup');
+    }
+}
 
 const addStyles = (styles) => {
     const style = document.createElement('style');
@@ -70,6 +873,9 @@ const addStyles = (styles) => {
         padding: 10px;
         text-align: center;
         min-width: 207px;
+        max-width: 95vw;
+        max-height: 85vh;
+        overflow: auto;
 
         left: 35vw;
         top: 28vh;
@@ -5700,7 +6506,7 @@ function getTrapStat(element) {
 
 function checkAuraActive(auraName) {
     var panel = document.getElementsByClassName(auraName);
-    var isActive = panel[0].classList.contains('active')
+    var isActive = panel[0]?.classList.contains('active') || false;
     logger(isActive);
     return isActive
 }
@@ -5712,39 +6518,47 @@ function removeBox() {
 }
 
 function calculateResults(powerType) {
-    const relevantArInfo = getArInfo();
-    const ftc = relevantArInfo.FTC;
+    const context = resolveHuntContext();
+    const population = getAttractionPopulation(context);
     const powerIndex = allType.indexOf(powerType);
     const rows = [];
     let overallAr = 0;
     let overallMinluck = 0;
     let overallCr = 0;
-    let undefinedAr = false;
+    let undefinedAr = population.status !== 'complete';
+    let undefinedCr = undefinedAr;
     let goodMinluckCount = 0;
+    const gameMice = new Set(tem_data);
+    const mouseNames = new Set([...tem_data, ...Object.keys(population.rates)]);
 
-    for (const mouseName of tem_data) {
+    for (const mouseName of mouseNames) {
+        // The source population is the probability universe; other game-list mice
+        // have zero mass only when a complete population has been selected.
+        const ar = undefinedAr ? null : population.rates[mouseName] ?? 0;
+        if (ar !== null) overallAr += ar;
         const mouseInfo = allMiceInfo[mouseName];
-        if (!mouseInfo) {
-            rows.push({ name: mouseName, ar: 'Unknown', minluck: 'Unknown', cr: 'Unknown', minluckSort: -Infinity, crSort: Infinity, goodMinluck: false });
+        if (!mouseInfo || !Number.isFinite(mouseInfo.effs[powerIndex])) {
+            if (ar === null || ar > 0) undefinedCr = true;
+            rows.push({ name: mouseName, ar: ar === null ? '—' : convertDoubleToPercentage(ar),
+                minluck: 'Unknown', cr: 'Unknown', effectiveCr: ar === 0 ? '0.00%' : '—',
+                minluckSort: -Infinity, crSort: Infinity, goodMinluck: false });
             continue;
         }
 
         const mousePower = mouseInfo.power;
         const mouseEff = mouseInfo.effs[powerIndex];
-        const cr = calculateCR(mouseName, mousePower, mouseEff);
-        const crText = convertCRToPercentage(cr);
-        let ar = relevantArInfo[mouseName];
-        if (ar === undefined) {
-            ar = '';
-            undefinedAr = true;
-        } else {
-            ar = adjustAr(ar, ftc);
-            overallAr += ar;
-            overallCr += ar * cr;
-            ar = convertDoubleToPercentage(ar);
-        }
+        let cr;
+        try { cr = calculateCR(mouseName, mousePower, mouseEff); }
+        catch (error) { cr = NaN; logger('CR state unavailable for ' + mouseName + ': ' + error.message); }
+        const validCr = Number.isFinite(cr) && cr >= 0 && cr <= 1;
+        const crText = validCr ? convertCRToPercentage(cr) : 'Unknown';
+        if (!validCr && (ar === null || ar > 0)) undefinedCr = true;
+        const effective = ar === 0 ? 0 : ar !== null && validCr ? ar * cr : null;
+        if (effective !== null) overallCr += effective;
 
-        const minluck = mouseMinluck(mouseName, mousePower, mouseEff);
+        let minluck;
+        try { minluck = mouseMinluck(mouseName, mousePower, mouseEff); }
+        catch (error) { minluck = 'Unknown'; }
         const infinite = minluck === '∞';
         if (infinite) {
             overallMinluck = '∞';
@@ -5752,15 +6566,20 @@ function calculateResults(powerType) {
             overallMinluck = minluck;
         }
         const goodMinluck = adjustedTrapLuck >= minluck;
-        if (goodMinluck) goodMinluckCount++;
-        rows.push({ name: mouseName, ar, minluck, cr: crText, minluckSort: infinite ? Infinity : minluck, crSort: cr, goodMinluck });
+        if (goodMinluck && gameMice.has(mouseName)) goodMinluckCount++;
+        rows.push({ name: mouseName, ar: ar === null ? '—' : convertDoubleToPercentage(ar),
+            minluck, cr: crText, effectiveCr: effective === null ? '—' : convertDoubleToPercentage(effective),
+            minluckSort: infinite ? Infinity : minluck === 'Unknown' ? -Infinity : minluck,
+            crSort: validCr ? cr : Infinity, goodMinluck });
     }
 
     rows.sort((a, b) => a.minluckSort === b.minluckSort ? a.crSort - b.crSort : (a.minluckSort > b.minluckSort ? -1 : 1));
-    return { rows, overallAr, overallMinluck, overallCr, undefinedAr, goodMinluckCount };
+    return { rows, overallAr, overallMinluck, overallCr, undefinedAr, undefinedCr,
+        goodMinluckCount, cloverRowCount: gameMice.size, population };
 }
 
 function renderBox(results) {
+    void loadAttractionDataset();
     const previousBox = document.getElementById("minluck-list");
     const previousTable = document.getElementById("chro-minluck-table");
     const wasMinimised = previousTable?.classList.contains("minimised");
@@ -5798,7 +6617,7 @@ function renderBox(results) {
 
     infoButton.onclick = function () {
         let position = JSON.parse(localStorage.getItem("Chro-minluck-vwvh")).split(",");
-        let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nLast Updated 22 Sept 2026\n\n Change tool's position / Set % for red text?\n\n" +
+        let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nScript last updated: 12 October 2026\n\n Change tool's position / Set % for red text?\n\n" +
             "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%", "35,28,60");
         if (mes == null || mes == "") {
             return
@@ -5878,17 +6697,24 @@ function renderBox(results) {
     const arheader = document.createElement("th");
     arheader.className = "chro-minluck-header-ar"
     arheader.innerText = "AR"
+    arheader.title = "Chance per hunt to attract this mouse";
     table.appendChild(arheader);
 
     const minluckheader = document.createElement("th");
     minluckheader.className = "chro-minluck-header-minluck"
     minluckheader.innerText = "Minluck"
-    table.appendChild(minluckheader);
 
     const crheader = document.createElement("th");
     crheader.className = "chro-minluck-header-cr"
-    crheader.innerText = "CRE"
+    crheader.innerText = "CR"
+    crheader.title = "Chance to catch this mouse once attracted";
     table.appendChild(crheader);
+
+    const effectiveHeader = document.createElement('th');
+    effectiveHeader.textContent = 'Effective CR';
+    effectiveHeader.title = 'AR × CR: chance per hunt to catch this mouse';
+    table.appendChild(effectiveHeader);
+    table.appendChild(minluckheader);
 
     results = results || calculateResults(powerType);
     for (const mouse of results.rows) {
@@ -5922,8 +6748,12 @@ function renderBox(results) {
 
         row.appendChild(mouseName);
         row.appendChild(aR);
-        row.appendChild(minLuck);
         row.appendChild(cR);
+        const effectiveCell = document.createElement('td');
+        effectiveCell.className = 'chro-minluck-data-cr';
+        effectiveCell.textContent = mouse.effectiveCr;
+        row.appendChild(effectiveCell);
+        row.appendChild(minLuck);
         table.appendChild(row);
     }
 
@@ -5931,16 +6761,11 @@ function renderBox(results) {
     overAllStatRow.className = "chro-minluck-row"
 
     var overAllStatTitle = document.createElement("td");
-    overAllStatTitle.innerText = "Overall Stat";
+    overAllStatTitle.innerText = "Overall";
     overAllStatTitle.className = "chro-minluck-header-name"
 
     var overAllStatAR = document.createElement("td");
     overAllStatAR.className = "chro-minluck-overall-ar"
-    if (!results.undefinedAr) {
-        overAllStatAR.innerText = convertDoubleToPercentage(results.overallAr);
-    } else {
-        arheader.innerText = ""
-    }
 
     var overAllStatMinLuck = document.createElement("td");
     overAllStatMinLuck.className = "chro-minluck-overall-minluck"
@@ -5951,19 +6776,16 @@ function renderBox(results) {
 
     var overAllStatCR = document.createElement("td");
     overAllStatCR.className = "chro-minluck-overall-cr"
-    if (!results.undefinedAr) {
-        overAllStatCR.innerText = convertDoubleToPercentage(results.overallCr);
-        if (overAllStatCR.innerText == "100.00%") {
-            overAllStatCR.classList.add('good-minluck');
-        } else if (results.overallCr * 100 <= turnRed) {
-            overAllStatCR.classList.add('bad-minluck');
-        }
-    }
 
     overAllStatRow.appendChild(overAllStatTitle);
     overAllStatRow.appendChild(overAllStatAR);
-    overAllStatRow.appendChild(overAllStatMinLuck);
     overAllStatRow.appendChild(overAllStatCR);
+    const overallEffective = document.createElement('td');
+    overallEffective.className = 'chro-minluck-overall-cr';
+    overallEffective.textContent = results.undefinedCr ? '—' : convertDoubleToPercentage(results.overallCr);
+    overallEffective.title = results.undefinedCr ? 'Effective CR requires a complete population and known CR for every attracted mouse' : 'Sum of AR × CR across the current population';
+    overAllStatRow.appendChild(overallEffective);
+    overAllStatRow.appendChild(overAllStatMinLuck);
     table.appendChild(overAllStatRow);
 
     buttonDiv.appendChild(infoButton);
@@ -8129,8 +8951,11 @@ function trapChangeListener() {
     XMLHttpRequest.prototype.open = function () {
         this.addEventListener("load", function () {
             if (this.status >= 200 && this.status < 300 &&
-                this.responseURL.startsWith("https://www.mousehuntgame.com/managers/ajax/users/changetrap.php")) {
-                setTimeout(colourClover, 0);
+                this.responseURL.startsWith("https://www.mousehuntgame.com/managers/ajax/") &&
+                !this.responseURL.includes('/getmiceeffectiveness.php')) {
+                setTimeout(() => {
+                    if (document.querySelector('.min-luck-button')) colourClover();
+                }, 0);
             }
         })
         originalOpen.apply(this, arguments);
@@ -8143,11 +8968,12 @@ function getSetupCache() {
         user.trap_cheese_effect, user.trap_power_bonus, user.trap_power_type_name,
         user.trinket_item_id, user.base_item_id, user.weapon_item_id,
         user.bait_item_id, user.bait_quantity === 0, user.environment_id,
-        user.quests
+        user.quests, user.viewing_atts
     ]);
 }
 
 function colourClover() {
+    void loadAttractionDataset();
     colourUpdateRequested = true;
     if (colourUpdatePromise) return colourUpdatePromise;
 
@@ -8174,7 +9000,7 @@ function colourClover() {
             const button = document.querySelector(".min-luck-button");
             if (!button) return;
             const results = calculateResults(user.trap_power_type_name);
-            const fractionGood = results.rows.length ? results.goodMinluckCount / results.rows.length : 0;
+            const fractionGood = results.cloverRowCount ? results.goodMinluckCount / results.cloverRowCount : 0;
             button.classList.remove("blue", "green", "red");
             button.classList.add(fractionGood === 1 ? "blue" : fractionGood >= 0.5 ? "green" : "red");
             if (document.getElementById("minluck-list")) renderBox(results);
