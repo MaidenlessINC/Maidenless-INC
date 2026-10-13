@@ -42,6 +42,7 @@ function harness() {
         convertCRToPercentage: value => (value * 100).toFixed(2) + '%'
     });
     vm.runInContext(section('function resolveTsituStage', 'function isRecord'), env);
+    vm.runInContext(section('function getAttractionCacheTtlMs', 'function loadAttractionDataset'), env);
     vm.runInContext(section('function getSourceCheeseAttraction', 'const addStyles ='), env);
     vm.runInContext(section('function calculateResults', 'function renderBox'), env);
     return { env, context };

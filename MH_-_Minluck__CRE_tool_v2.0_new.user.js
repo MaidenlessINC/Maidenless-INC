@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      6.1.1
+// @version      6.1.2
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -640,11 +640,23 @@ function readAttractionCache() {
     }
 }
 
+function getAttractionCacheTtlMs() {
+    try {
+        const settings = JSON.parse(localStorage.getItem('Chro-minluck-vwvh'));
+        const hours = Number(settings?.split(',')[3]);
+        const ttl = hours * 60 * 60 * 1000;
+        if (Number.isFinite(ttl) && ttl > 0) return ttl;
+    } catch (error) {
+        logger('AR cache expiry setting unavailable: ' + error.message);
+    }
+    return AR_CACHE_TTL_MS;
+}
+
 function loadAttractionDataset() {
     readAttractionCache();
     if (attractionLoadPromise) return attractionLoadPromise;
     const now = Date.now();
-    if ((attractionCache && now - attractionCache.retrievedAt < AR_CACHE_TTL_MS) ||
+    if ((attractionCache && now - attractionCache.retrievedAt < getAttractionCacheTtlMs()) ||
         now - attractionLastAttempt < AR_RETRY_MS) return Promise.resolve(attractionCache);
     attractionLastAttempt = now;
     const controller = new AbortController();
@@ -847,7 +859,7 @@ function getAttractionPopulation(context) {
         }
         return { status: 'complete', rates, attraction, context, source: 'Tsitu',
             sampleSize: raw.SampleSize, retrievedAt: attractionCache.retrievedAt,
-            stale: Date.now() - attractionCache.retrievedAt >= AR_CACHE_TTL_MS,
+            stale: Date.now() - attractionCache.retrievedAt >= getAttractionCacheTtlMs(),
             reason: attractionLoadError };
     }
     // Exact legacy states remain useful offline; they never fill holes in a remote population.
@@ -6653,7 +6665,7 @@ function renderBox(results) {
         turnRed = Number(position[2]);
     } else {
         turnRed = 60;
-        localStorage.setItem("Chro-minluck-vwvh", JSON.stringify("35,28,60"));
+        localStorage.setItem("Chro-minluck-vwvh", JSON.stringify("35,28,60,48"));
     };
     if (previousLeft) div.style.left = previousLeft;
     if (previousTop) div.style.top = previousTop;
@@ -6667,12 +6679,23 @@ function renderBox(results) {
 
     infoButton.onclick = function () {
         let position = JSON.parse(localStorage.getItem("Chro-minluck-vwvh")).split(",");
-        let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nScript last updated: 12 October 2026\n\n Change tool's position / Set % for red text?\n\n" +
-            "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%", "35,28,60");
+        position[3] = String(getAttractionCacheTtlMs() / (60 * 60 * 1000));
+        let mes = prompt("More information can be found at:\nhttps://tsitu.github.io/MH-Tools/cre.html\nScript last updated: 14 October 2026\n\nChange position / Red text % / AR cache expiry\nEnter: left,top,red %,cache hours\n\n" +
+            "Left: " + position[0] + "\nTop: " + position[1] + "\nRed text at: " + position[2] + "%\nAR cache expires after: " + position[3] + " hours (default: 48)", position.join(','));
         if (mes == null || mes == "") {
             return
         } else {
-            localStorage.setItem("Chro-minluck-vwvh", JSON.stringify(mes));
+            const values = mes.split(',').map(value => value.trim());
+            if (values.length === 3 || (values.length === 4 && values[3] === '')) values[3] = '48';
+            const numbers = values.map(Number);
+            const ttl = numbers[3] * 60 * 60 * 1000;
+            if (values.length !== 4 || values.some(value => value === '') ||
+                numbers.some(value => !Number.isFinite(value)) || numbers[2] < 0 || numbers[2] > 100 ||
+                !Number.isFinite(ttl) || ttl <= 0) {
+                alert('Enter left,top,red %,cache hours. Red text must be 0–100 and cache hours must be a positive number (default: 48).');
+                return;
+            }
+            localStorage.setItem("Chro-minluck-vwvh", JSON.stringify(values.join(',')));
             renderBox();
         }
     }
