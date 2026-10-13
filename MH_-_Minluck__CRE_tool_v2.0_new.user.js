@@ -5,7 +5,7 @@
 // @match        https://www.mousehuntgame.com/*
 // @match        https://apps.facebook.com/mousehunt/*
 // @icon         https://www.google.com/s2/favicons?domain=mousehuntgame.com
-// @version      6.1.0
+// @version      6.1.1
 // @grant        none
 // @namespace https://greasyfork.org/users/748165
 // ==/UserScript==
@@ -783,10 +783,47 @@ function changesAttractionPool(charm) {
     return attractionCharmKeys.has(charm) || /Warpath|Attraction|Scent/.test(charm);
 }
 
+function getConclusionCliffsPopulation(context) {
+    // CC: ordinary Postscript Weavers follow the story's exact lore amounts.
+    // Fantasy Postscript has a separate Ultimate Mythweaver population.
+    if (context.locationKey !== 'Conclusion Cliffs' || context.stageKey !== 'Postscript' ||
+        !['Plotting Paneer', 'Storied Saga', 'Deus Ex Maconnais'].includes(context.cheeseKey)) return null;
+    const unavailable = reason => ({ status: 'unavailable', reason, context, rates: Object.create(null) });
+    if (changesAttractionPool(context.charmKey)) return unavailable('CC lore AR does not support attraction-changing charms');
+    const story = user.quests?.QuestConclusionCliffs?.story;
+    if (!story?.is_writing || !story.is_postscript || !Array.isArray(story.story_content) ||
+        !Number.isFinite(story.total_story_content) || story.total_story_content <= 0) {
+        return unavailable('CC Postscript lore data unavailable');
+    }
+    const genres = {
+        adventure: 'Adventure Weaver', comedy: 'Comedy Weaver', romance: 'Romance Weaver',
+        suspense: 'Suspense Weaver', tragedy: 'Tragedy Weaver'
+    };
+    const amounts = Object.fromEntries(Object.values(genres).map(name => [name, 0]));
+    const seen = new Set();
+    let total = 0;
+    for (const content of story.story_content) {
+        if (!content || !Object.hasOwn(genres, content.genre_type) || seen.has(content.genre_type) ||
+            !Number.isFinite(content.progress_amount) || content.progress_amount < 0) {
+            return unavailable('CC Postscript lore data invalid');
+        }
+        seen.add(content.genre_type);
+        amounts[genres[content.genre_type]] = content.progress_amount;
+        total += content.progress_amount;
+    }
+    if (total !== story.total_story_content) return unavailable('CC Postscript lore total does not match');
+    const attraction = getSourceCheeseAttraction(context.cheeseKey);
+    const rates = Object.create(null);
+    for (const [name, amount] of Object.entries(amounts)) rates[name] = amount / total * attraction;
+    return { status: 'complete', rates, attraction, context, source: 'CC story lore' };
+}
+
 function getAttractionPopulation(context) {
     readAttractionCache();
     const unavailable = reason => ({ status: 'unavailable', reason, context, rates: Object.create(null) });
     if (context.reason) return unavailable(context.reason);
+    const ccPopulation = getConclusionCliffsPopulation(context);
+    if (ccPopulation) return ccPopulation;
     const cheese = context.useLocal ? null : attractionCache?.data[context.locationKey]?.[context.stageKey]?.[context.cheeseKey];
     if (cheese) {
         const charm = context.charmKey;
@@ -830,6 +867,19 @@ function getAttractionPopulation(context) {
     } catch (error) {
         return unavailable('No AR population for this setup');
     }
+}
+
+function reconcileAttractionPopulation(population, mice) {
+    if (population.status !== 'complete') return population;
+    const gameMice = new Set(mice);
+    // The meter supplies membership, not probabilities. A conflicting source
+    // cannot safely be filtered and renormalized into a new AR distribution.
+    const mismatch = !gameMice.size ||
+        Object.entries(population.rates).some(([name, rate]) => rate > 0 && !gameMice.has(name)) ||
+        [...gameMice].some(name => !Object.hasOwn(population.rates, name));
+    if (!mismatch) return population;
+    return { ...population, status: 'unavailable', rates: Object.create(null),
+        reason: 'AR population does not match the Trap Effectiveness mouse list' };
 }
 
 const addStyles = (styles) => {
@@ -6459,6 +6509,7 @@ async function refreshData() {
     try {
         var response = JSON.parse(res.responseText);
         const mice = [];
+        if (!isRecord(response?.effectiveness)) throw new Error('Trap Effectiveness data unavailable');
         if (response) {
             var effect = ["Effortless", "Easy", "Moderate", "Challenging", "Difficult", "Overpowering", "Near Impossible", "Impossible"]
             for (var i = 0; i < effect.length; i++) {
@@ -6519,7 +6570,7 @@ function removeBox() {
 
 function calculateResults(powerType) {
     const context = resolveHuntContext();
-    const population = getAttractionPopulation(context);
+    const population = reconcileAttractionPopulation(getAttractionPopulation(context), tem_data);
     const powerIndex = allType.indexOf(powerType);
     const rows = [];
     let overallAr = 0;
@@ -6529,11 +6580,10 @@ function calculateResults(powerType) {
     let undefinedCr = undefinedAr;
     let goodMinluckCount = 0;
     const gameMice = new Set(tem_data);
-    const mouseNames = new Set([...tem_data, ...Object.keys(population.rates)]);
+    const mouseNames = gameMice;
 
     for (const mouseName of mouseNames) {
-        // The source population is the probability universe; other game-list mice
-        // have zero mass only when a complete population has been selected.
+        // Only display game-listed mice; AR is available after membership checks.
         const ar = undefinedAr ? null : population.rates[mouseName] ?? 0;
         if (ar !== null) overallAr += ar;
         const mouseInfo = allMiceInfo[mouseName];
@@ -6727,6 +6777,7 @@ function renderBox(results) {
         var aR = document.createElement("td");
         aR.className = "chro-minluck-data-ar";
         aR.innerText = mouse.ar;
+        aR.title = results.population.reason || results.population.source || '';
 
         //minluck----
         var minLuck = document.createElement("td");
@@ -6783,7 +6834,7 @@ function renderBox(results) {
     const overallEffective = document.createElement('td');
     overallEffective.className = 'chro-minluck-overall-cr';
     overallEffective.textContent = results.undefinedCr ? '—' : convertDoubleToPercentage(results.overallCr);
-    overallEffective.title = results.undefinedCr ? 'Effective CR requires a complete population and known CR for every attracted mouse' : 'Sum of AR × CR across the current population';
+    overallEffective.title = results.undefinedCr ? results.population.reason || 'Effective CR requires a complete population and known CR for every attracted mouse' : 'Sum of AR × CR across the current population';
     overAllStatRow.appendChild(overallEffective);
     overAllStatRow.appendChild(overAllStatMinLuck);
     table.appendChild(overAllStatRow);
